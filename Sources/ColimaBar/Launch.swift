@@ -46,7 +46,7 @@ enum Launch {
         window.contentView = host
         window.orderBack(nil)
         host.layoutSubtreeIfNeeded()
-        RunLoop.current.run(until: Date().addingTimeInterval(0.6))
+        RunLoop.current.run(until: Date().addingTimeInterval(2.5))
         guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return }
         host.cacheDisplay(in: host.bounds, to: rep)
         if let png = rep.representation(using: .png, properties: [:]) {

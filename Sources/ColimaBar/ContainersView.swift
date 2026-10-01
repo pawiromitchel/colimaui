@@ -14,26 +14,34 @@ struct ContainersView: View {
 
     var body: some View {
         @Bindable var store = store
-        HSplitView {
-            list
-                .frame(minWidth: 420)
+        Group {
             if let selection, let detail = detail(for: selection) {
                 detail
-                    .frame(minWidth: 380, idealWidth: 520)
+            } else {
+                list
             }
         }
         .navigationTitle("Containers")
         .searchable(text: $store.searchText, prompt: "Search")
         .toolbar {
             ToolbarItem {
+                if selection == nil {
                 Picker("Group by", selection: $store.groupMode) {
                     ForEach(GroupMode.allCases) { Text("Group: \($0.rawValue)").tag($0) }
                 }
                 .pickerStyle(.menu)
                 .help("Group containers")
+                }
             }
         }
         .confirm($pendingDelete)
+        .onAppear {
+            // Lets the headless snapshot open a container: COLIMABAR_SELECT=<container name>.
+            if selection == nil, let name = ProcessInfo.processInfo.environment["COLIMABAR_SELECT"],
+               let match = store.containers.first(where: { $0.name == name }) {
+                selection = .container(match.id)
+            }
+        }
         .onChange(of: store.containers) {
             if case .container(let id) = selection, store.container(id: id) == nil { selection = nil }
             if case .group(let id) = selection, !store.groups.contains(where: { $0.id == id }) { selection = nil }
@@ -51,13 +59,13 @@ struct ContainersView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0, pinnedViews: []) {
-                        ContainerHeaderRow(compact: selection != nil)
+                        ContainerHeaderRow(compact: false)
                         ForEach(groups) { group in
                             if group.kind != .flat { groupRow(group) }
                             if !collapsed.contains(group.id) {
                                 ForEach(group.containers) { container in
                                     ContainerRow(container: container, indent: group.kind != .flat,
-                                                 compact: selection != nil,
+                                                 compact: false,
                                                  selected: selection == .container(container.id),
                                                  pendingDelete: $pendingDelete)
                                         .onTapGesture { selection = .container(container.id) }
@@ -71,7 +79,7 @@ struct ContainersView: View {
     }
 
     private func groupRow(_ group: ContainerGroup) -> some View {
-        GroupRow(group: group, compact: selection != nil, collapsed: collapsed.contains(group.id),
+        GroupRow(group: group, compact: false, collapsed: collapsed.contains(group.id),
                  selected: selection == .group(group.id),
                  toggle: { if collapsed.contains(group.id) { collapsed.remove(group.id) } else { collapsed.insert(group.id) } },
                  pendingDelete: $pendingDelete)
@@ -95,7 +103,7 @@ private struct ContainerHeaderRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Color.clear.frame(width: 28)
-            Text("Name").frame(maxWidth: .infinity, alignment: .leading)
+            Text("Name").frame(minWidth: 120, maxWidth: .infinity, alignment: .leading)
             if !compact { Text("Image").frame(width: 150, alignment: .leading) }
             Text("Ports").frame(width: 130, alignment: .leading)
             Text("CPU").frame(width: 50, alignment: .trailing)
@@ -131,7 +139,7 @@ private struct GroupRow: View {
             .buttonStyle(.borderless)
             HStack(spacing: 6) {
                 StatusDot(color: group.allRunning ? .green : (group.runningCount == 0 ? .secondary.opacity(0.6) : .orange))
-                Text(group.title).fontWeight(.medium)
+                Text(group.title).fontWeight(.medium).lineLimit(1)
                 if group.isStack || group.kind == .image {
                     Text(group.summary).foregroundStyle(.secondary)
                 }
@@ -182,10 +190,10 @@ private struct ContainerRow: View {
             Color.clear.frame(width: indent ? 28 : 8)
             HStack(spacing: 6) {
                 StatusDot(color: container.state.color)
-                Text(indent ? container.displayName : container.name).lineLimit(1)
+                Text(indent ? container.displayName : container.name).lineLimit(1).truncationMode(.middle)
                 if busy { ProgressView().controlSize(.mini) }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minWidth: 120, maxWidth: .infinity, alignment: .leading)
             if !compact {
                 Text(container.image).font(.system(size: 12, design: .monospaced)).foregroundStyle(.secondary)
                     .lineLimit(1).truncationMode(.middle).frame(width: 150, alignment: .leading)
@@ -239,7 +247,12 @@ private struct DetailHeader<Actions: View>: View {
     @ViewBuilder var actions: Actions
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
+            Button(action: onClose) {
+                Label("Containers", systemImage: "chevron.left")
+            }
+            .keyboardShortcut(.cancelAction)
+            .help("Back to containers (Esc)")
             StatusDot(color: color)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.headline).lineLimit(1)
@@ -247,7 +260,6 @@ private struct DetailHeader<Actions: View>: View {
             }
             Spacer()
             actions
-            IconButton(systemName: "xmark", help: "Close") { onClose() }
         }
         .padding(12)
     }
