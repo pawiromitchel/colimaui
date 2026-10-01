@@ -28,11 +28,11 @@ expect "cask is valid ruby"                "Syntax OK" "$(ruby -c <<<"$cask" 2>&
 
 # Two releases finishing back to back: the second run's checkout predates the first run's cask commit.
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-git init -q --bare "$tmp/remote.git"
+git init -q --bare --initial-branch=main "$tmp/remote.git"
 git clone -q "$tmp/remote.git" "$tmp/seed" 2>/dev/null
 mkdir -p "$tmp/seed/scripts"
 cp scripts/render-cask.sh scripts/colimaui.rb.tmpl scripts/update-cask.sh "$tmp/seed/scripts/"
-( cd "$tmp/seed" && git checkout -q -b main && git add -A && git -c user.name=t -c user.email=t@t commit -qm seed && git push -q origin main )
+( cd "$tmp/seed" && git checkout -q -B main && git add -A && git -c user.name=t -c user.email=t@t commit -qm seed && git push -q origin main )
 git clone -q "$tmp/remote.git" "$tmp/first" && git clone -q "$tmp/remote.git" "$tmp/second"   # both predate any cask commit
 for d in first second; do git -C "$tmp/$d" config user.name t; git -C "$tmp/$d" config user.email t@t; done
 SHA1=$(printf 'one' | shasum -a 256 | cut -d' ' -f1); SHA2=$(printf 'two' | shasum -a 256 | cut -d' ' -f1)
