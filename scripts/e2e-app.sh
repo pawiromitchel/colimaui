@@ -63,7 +63,6 @@ sleep 1
 open -n "$APP"
 sleep 6
 pgrep -x ColimaBar >/dev/null || fail "app crashed on launch"
-LOG=$(log show --last 1m --predicate 'process == "ColimaBar" AND messageType == fault' 2>/dev/null | grep -c "ColimaBar" || true)
 pkill -x ColimaBar || true
 echo "ok  packaged app launched and stayed running"
 echo "e2e passed"

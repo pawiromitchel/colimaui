@@ -22,7 +22,7 @@ Requires macOS 14+, and `colima` and `docker` installed with Homebrew.
 ## Tests
 
 ```bash
-./scripts/test.sh                      # 50 unit tests, no Colima needed
+./scripts/test.sh                      # unit tests, no Colima needed
 COLIMABAR_E2E=1 ./scripts/test.sh      # also runs live tests against your running Colima
 ./scripts/e2e-app.sh                   # builds the .app, launches it, checks it against `docker ps`
 ```
