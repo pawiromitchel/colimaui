@@ -1,10 +1,11 @@
 #!/bin/bash
-# Runs the test suite. Swift Testing ships with the Command Line Tools but
-# SwiftPM doesn't add its framework path, so we pass it explicitly.
+# Runs the test suite.
+# With only the Command Line Tools installed, SwiftPM can't find the Swift Testing framework that ships
+# with them, so its path is passed explicitly. With full Xcode (CI) plain `swift test` just works.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DEV=/Library/Developer/CommandLineTools/Library/Developer
-if [ -d "$DEV/Frameworks/Testing.framework" ]; then
+if [[ "$(xcode-select -p)" == "/Library/Developer/CommandLineTools" && -d "$DEV/Frameworks/Testing.framework" ]]; then
   exec swift test \
     -Xswiftc -F"$DEV/Frameworks" -Xlinker -F"$DEV/Frameworks" \
     -Xlinker -rpath -Xlinker "$DEV/Frameworks" \

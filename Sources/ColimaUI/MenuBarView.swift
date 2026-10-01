@@ -31,7 +31,10 @@ struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 2) {
             header
             Divider().padding(.vertical, 4)
-            if !store.hasLoaded {
+            if store.hasLoaded && !store.prerequisites.isReady {
+                Text(store.prerequisites.title).fontWeight(.medium).padding(.horizontal, 8).padding(.top, 6)
+                Text("Open ColimaUI for the install steps.").foregroundStyle(.secondary).padding(.horizontal, 8).padding(.bottom, 6)
+            } else if !store.hasLoaded {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Loading…").foregroundStyle(.secondary) }
                     .padding(8)
             } else if let p = store.selectedProfile, p.isRunning {

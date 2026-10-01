@@ -25,6 +25,7 @@ public final class ColimaStore {
     public private(set) var activeContext: String?
     public private(set) var lastRefresh: Date?
     public private(set) var toolMissing: String?
+    public private(set) var prerequisites = Prerequisites.ready
     public private(set) var diskUsage: DockerDiskUsage?
     public private(set) var vmDisk: VMDisk?
     public private(set) var history = MetricsHistory()
@@ -38,13 +39,16 @@ public final class ColimaStore {
 
     @ObservationIgnored public let colima: ColimaClient
     @ObservationIgnored private let runner: CommandRunning
+    @ObservationIgnored private let checkPrerequisites: @Sendable () -> Prerequisites
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
     @ObservationIgnored private var lastDiskRefresh: Date?
     @ObservationIgnored private var historyProfile: String?
     public static let diskRefreshInterval: TimeInterval = 30
 
-    public init(runner: CommandRunning = ProcessRunner()) {
+    public init(runner: CommandRunning = ProcessRunner(),
+                prerequisites: @escaping @Sendable () -> Prerequisites = { Prerequisites.check() }) {
         self.runner = runner
+        self.checkPrerequisites = prerequisites
         self.colima = ColimaClient(runner: runner)
     }
 
@@ -102,6 +106,14 @@ public final class ColimaStore {
     public func stopAutoRefresh() { refreshTask?.cancel(); refreshTask = nil }
 
     public func refresh() async {
+        // Without colima and docker there's nothing to ask, so skip the commands and let the UI explain.
+        prerequisites = checkPrerequisites()
+        guard prerequisites.isReady else {
+            profiles = []; containers = []; images = []; volumes = []; networks = []; stats = [:]
+            diskUsage = nil; vmDisk = nil; history.reset()
+            lastRefresh = Date()
+            return
+        }
         await refreshProfiles()
         activeContext = await colima.currentContext()
         guard let client = docker else {

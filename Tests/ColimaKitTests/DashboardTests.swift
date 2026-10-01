@@ -123,7 +123,7 @@ import Foundation
     }
 
     @Test func refreshCollectsDiskAndHistory() async {
-        let store = ColimaStore(runner: makeRunner())
+        let store = ColimaStore(runner: makeRunner(), prerequisites: { .ready })
         await store.refresh()
         #expect(store.diskUsage?.entry(.buildCache) != nil)
         #expect(store.vmDisk?.mount == "/mnt/lima-colima")
@@ -137,7 +137,7 @@ import Foundation
 
     @Test func diskIsRefreshedOnItsOwnSchedule() async {
         let runner = makeRunner()
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         await store.refresh()
         #expect(runner.commandLines.filter { $0.hasPrefix("docker system df") }.count == 1)
@@ -148,14 +148,14 @@ import Foundation
 
     @Test func attentionComesFromTheStore() async {
         let runner = makeRunner()
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         // shop-worker exited with code 0 in the sample data, which is not a problem.
         #expect(store.attention.isEmpty)
     }
 
     @Test func stoppedProfileClearsDashboardData() async {
-        let store = ColimaStore(runner: makeRunner())
+        let store = ColimaStore(runner: makeRunner(), prerequisites: { .ready })
         await store.refresh()
         store.selectedProfileName = "k8s"
         await store.refresh()
@@ -167,7 +167,7 @@ import Foundation
     @Test func pruneBuildCacheRunsTheBuilderCommandAndRefreshesDisk() async {
         let runner = makeRunner()
         runner.on("builder", "prune", output: "Total:\t37.76GB\n")
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         await store.prune(.buildCache)
         #expect(runner.commandLines.contains("docker builder prune -f"))

@@ -46,6 +46,17 @@ struct MainView: View {
     }
 
     var body: some View {
+        Group {
+            if store.hasLoaded && !store.prerequisites.isReady {
+                SetupView()
+            } else {
+                splitView
+            }
+        }
+        .frame(minWidth: 860, minHeight: 520)
+    }
+
+    private var splitView: some View {
         NavigationSplitView {
             SidebarView(sectionName: $sectionName)
                 .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 260)
@@ -69,7 +80,6 @@ struct MainView: View {
             }
         }
         .onChange(of: sectionName) { old, new in slideIn(from: old, to: new) }
-        .frame(minWidth: 860, minHeight: 520)
     }
 }
 

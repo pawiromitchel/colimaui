@@ -79,12 +79,25 @@ struct PortLinks: View {
     }
 }
 
-struct EmptyState: View {
+struct EmptyState<Actions: View>: View {
     var systemImage: String
     var title: String
     var message: String
+    @ViewBuilder var actions: Actions
     var body: some View {
-        ContentUnavailableView(title, systemImage: systemImage, description: Text(message))
+        ContentUnavailableView {
+            Label(title, systemImage: systemImage)
+        } description: {
+            Text(message)
+        } actions: {
+            actions
+        }
+    }
+}
+
+extension EmptyState where Actions == EmptyView {
+    init(systemImage: String, title: String, message: String) {
+        self.init(systemImage: systemImage, title: title, message: message) { EmptyView() }
     }
 }
 

@@ -52,6 +52,10 @@ struct SettingsView: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var loginError: String?
 
+    static var version: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
+    }
+
     var body: some View {
         Form {
             Picker("Refresh every", selection: $refreshSeconds) {
@@ -70,6 +74,11 @@ struct SettingsView: View {
                     }
                 }
             if let loginError { Text(loginError).font(.caption).foregroundStyle(.secondary) }
+
+            Section("About") {
+                LabeledContent("Version", value: Self.version)
+                Link("ColimaUI on GitHub", destination: URL(string: "https://github.com/pawiromitchel/colimaui")!)
+            }
 
             Section("Prune") {
                 HStack {

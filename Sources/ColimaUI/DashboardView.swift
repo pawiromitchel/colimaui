@@ -84,9 +84,21 @@ struct DashboardView: View {
                 content(profile)
             } else if store.selectedProfileIsBusy {
                 LoadingState(message: "Waiting for Colima…")
+            } else if store.profiles.isEmpty {
+                EmptyState(systemImage: "gauge.with.dots.needle.0percent", title: "Let's start Colima",
+                           message: "There's no Colima VM yet. Starting one downloads a small Linux image the first time, which takes a minute or two.") {
+                    Button("Start Colima") { Task { await store.startProfile("default") } }
+                        .buttonStyle(.borderedProminent).controlSize(.large)
+                    Button("Choose settings…") { navigate(.profiles) }
+                }
+            } else if let profile = store.selectedProfile {
+                EmptyState(systemImage: "gauge.with.dots.needle.0percent", title: "\(profile.name) isn't running",
+                           message: "Start it to see its containers and resources.") {
+                    Button("Start \(profile.name)") { Task { await store.startProfile(profile.name) } }
+                        .buttonStyle(.borderedProminent).controlSize(.large)
+                }
             } else {
-                EmptyState(systemImage: "gauge.with.dots.needle.0percent", title: "Colima isn't running",
-                           message: "Start a profile to see its containers and resources.")
+                LoadingState(message: "Loading…")
             }
         }
         .animation(.easeInOut(duration: 0.2), value: store.hasLoaded)

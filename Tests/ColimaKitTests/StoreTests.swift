@@ -17,7 +17,7 @@ import Foundation
     }
 
     @Test func refreshLoadsEverything() async {
-        let store = ColimaStore(runner: makeRunner())
+        let store = ColimaStore(runner: makeRunner(), prerequisites: { .ready })
         await store.refresh()
         #expect(store.profiles.count == 2)
         #expect(store.selectedProfile?.name == "default")
@@ -33,7 +33,7 @@ import Foundation
     }
 
     @Test func searchFiltersGroups() async {
-        let store = ColimaStore(runner: makeRunner())
+        let store = ColimaStore(runner: makeRunner(), prerequisites: { .ready })
         await store.refresh()
         store.searchText = "redis"
         #expect(store.groups.map(\.title) == ["Standalone"])
@@ -44,7 +44,7 @@ import Foundation
 
     @Test func stoppedProfileClearsDockerData() async {
         let runner = makeRunner()
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         store.selectedProfileName = "k8s"
         await store.refresh()
@@ -64,14 +64,14 @@ import Foundation
                 AsyncThrowingStream { $0.finish() }
             }
         }
-        let store = ColimaStore(runner: Missing())
+        let store = ColimaStore(runner: Missing(), prerequisites: { .ready })
         await store.refresh()
         #expect(store.toolMissing?.contains("colima not found") == true)
     }
 
     @Test func stackActionsOnlyTouchRelevantContainers() async {
         let runner = makeRunner()
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         let shop = store.groups[0]
 
@@ -87,7 +87,7 @@ import Foundation
 
     @Test func removeAndBusyStateClears() async {
         let runner = makeRunner()
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         await store.remove(["ccc333"])
         #expect(runner.commandLines.contains("docker rm -f ccc333"))
@@ -97,7 +97,7 @@ import Foundation
     @Test func errorsAreLoggedNotThrown() async {
         let runner = makeRunner()
         runner.responses.insert(({ $0.first == "stop" }, CommandResult(exitCode: 1, stdout: "", stderr: "boom")), at: 0)
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         await store.perform(.stop, on: ["aaa111"])
         #expect(store.activity.contains { $0.level == .error && $0.message == "boom" })
@@ -106,7 +106,7 @@ import Foundation
     @Test func startProfileStreamsProgressIntoActivity() async {
         let runner = makeRunner()
         runner.streams = [#"time="t" level=info msg="starting colima""#, #"time="t" level=info msg="done""#]
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         await store.startProfile("k8s", options: StartOptions(cpus: 2))
         let messages = store.activity.map(\.message)
@@ -118,7 +118,7 @@ import Foundation
 
     @Test func stopAndDeleteProfile() async {
         let runner = makeRunner()
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.stopProfile("default")
         await store.deleteProfile("k8s")
         #expect(runner.commandLines.contains("colima stop --profile default"))
@@ -127,7 +127,7 @@ import Foundation
 
     @Test func useContextSwitchesDockerContext() async {
         let runner = makeRunner()
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         await store.useContext(store.profiles[1])
         #expect(runner.commandLines.contains("docker context use colima-k8s"))
@@ -137,14 +137,14 @@ import Foundation
         let runner = makeRunner()
         runner.on("image", "prune", output: "Deleted Images:\nTotal reclaimed space: 1.2GB\n")
         runner.responses.insert(runner.responses.removeLast(), at: 0)
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         await store.prune(.images)
         #expect(store.activity.last?.message == "Total reclaimed space: 1.2GB")
     }
 
     @Test func activityIsCapped() {
-        let store = ColimaStore(runner: FakeRunner())
+        let store = ColimaStore(runner: FakeRunner(), prerequisites: { .ready })
         for i in 0..<400 { store.log(.info, "m\(i)") }
         #expect(store.activity.count == 300)
         #expect(store.activity.last?.message == "m399")
@@ -160,7 +160,7 @@ import Foundation
     @Test func hasLoadedFlipsAfterFirstRefresh() async {
         let runner = FakeRunner()
         runner.on("list", output: Sample.colimaList)
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         #expect(!store.hasLoaded)
         await store.refresh()
         #expect(store.hasLoaded)
@@ -170,7 +170,7 @@ import Foundation
         let runner = FakeRunner()
         runner.on("list", output: Sample.colimaList)
         runner.streams = ["starting"]
-        let store = ColimaStore(runner: runner)
+        let store = ColimaStore(runner: runner, prerequisites: { .ready })
         await store.refresh()
         #expect(!store.selectedProfileIsBusy)
         await store.startProfile("default")
