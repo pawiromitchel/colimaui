@@ -44,12 +44,23 @@ enum Launch {
     @MainActor
     static func snapshot(of store: ColimaStore, to path: String) {
         _ = NSApplication.shared
-        // COLIMABAR_SNAPSHOT=menu renders the menu bar popover instead of the main window.
-        let menu = ProcessInfo.processInfo.environment["COLIMABAR_SNAPSHOT"] == "menu"
-        let size = menu ? NSSize(width: 340, height: 520) : NSSize(width: 1100, height: 700)
-        let host: NSHostingView<AnyView> = menu
-            ? NSHostingView(rootView: AnyView(MenuBarView().environment(store).frame(width: size.width, height: size.height, alignment: .top)))
-            : NSHostingView(rootView: AnyView(MainView().environment(store).frame(width: size.width, height: size.height)))
+        // COLIMABAR_SNAPSHOT=menu|sidebar renders just that view instead of the main window.
+        let target = ProcessInfo.processInfo.environment["COLIMABAR_SNAPSHOT"] ?? "main"
+        let size: NSSize
+        let root: AnyView
+        switch target {
+        case "menu":
+            size = NSSize(width: 340, height: 520)
+            root = AnyView(MenuBarView().environment(store).frame(width: size.width, height: size.height, alignment: .top))
+        case "sidebar":
+            size = NSSize(width: 220, height: 420)
+            root = AnyView(SidebarView(sectionName: .constant(NavSection.containers.rawValue)).environment(store)
+                .frame(width: size.width, height: size.height))
+        default:
+            size = NSSize(width: 1100, height: 700)
+            root = AnyView(MainView().environment(store).frame(width: size.width, height: size.height))
+        }
+        let host = NSHostingView(rootView: root)
         host.frame = NSRect(origin: .zero, size: size)
         let window = NSWindow(contentRect: host.frame, styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.appearance = NSAppearance(named: .aqua)

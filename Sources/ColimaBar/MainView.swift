@@ -81,16 +81,21 @@ struct SidebarView: View {
         @Bindable var store = store
         VStack(spacing: 0) {
             profilePicker
-            List(selection: Binding(get: { sectionName }, set: { if let s = $0 { sectionName = s } })) {
-                ForEach(NavSection.allCases.filter { $0 != .profiles }) { section in
-                    Label(section.rawValue, systemImage: section.icon).tag(section.rawValue)
+            // Custom rows instead of a native List, which has no hover state.
+            ScrollView {
+                VStack(spacing: 2) {
+                    ForEach(NavSection.allCases.filter { $0 != .profiles }) { section in row(section) }
+                    Divider().padding(.vertical, 6)
+                    row(.profiles)
                 }
-                Divider()
-                Label(NavSection.profiles.rawValue, systemImage: NavSection.profiles.icon).tag(NavSection.profiles.rawValue)
+                .padding(.horizontal, 10).padding(.top, 4)
             }
-            .listStyle(.sidebar)
             if let p = store.selectedProfile { resources(p) }
         }
+    }
+
+    private func row(_ section: NavSection) -> some View {
+        SidebarRow(section: section, selected: sectionName == section.rawValue) { sectionName = section.rawValue }
     }
 
     private var profilePicker: some View {
@@ -153,5 +158,37 @@ struct StatusBanner: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .background(tint.opacity(0.12))
+    }
+}
+
+struct SidebarRow: View {
+    var section: NavSection
+    var selected: Bool
+    var action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                // A fixed icon slot keeps every label aligned, whatever the symbol's width.
+                Image(systemName: section.icon).frame(width: 20)
+                Text(section.rawValue)
+            }
+                .fontWeight(selected ? .medium : .regular)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(RoundedRectangle(cornerRadius: 8).fill(fill))
+                .contentShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
+        .animation(.easeOut(duration: 0.15), value: selected)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var fill: Color {
+        if selected { return Color.accentColor.opacity(hovering ? 0.26 : 0.2) }
+        return hovering ? Color.primary.opacity(0.09) : .clear
     }
 }
