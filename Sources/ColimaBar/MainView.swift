@@ -2,12 +2,13 @@ import SwiftUI
 import ColimaKit
 
 enum NavSection: String, CaseIterable, Identifiable {
-    case containers = "Containers", images = "Images", volumes = "Volumes", networks = "Networks"
+    case dashboard = "Dashboard", containers = "Containers", images = "Images", volumes = "Volumes", networks = "Networks"
     case profiles = "Profiles"
 
     var id: String { rawValue }
     var icon: String {
         switch self {
+        case .dashboard: "gauge.with.dots.needle.33percent"
         case .containers: "shippingbox"
         case .images: "square.stack.3d.up"
         case .volumes: "externaldrive"
@@ -19,9 +20,10 @@ enum NavSection: String, CaseIterable, Identifiable {
 
 struct MainView: View {
     @Environment(ColimaStore.self) private var store
-    @AppStorage("selectedSection") private var sectionName = NavSection.containers.rawValue
+    /// The app always opens on the dashboard.
+    @State private var sectionName = NavSection.dashboard.rawValue
 
-    private var section: NavSection { NavSection(rawValue: sectionName) ?? .containers }
+    private var section: NavSection { NavSection(rawValue: sectionName) ?? .dashboard }
 
     var body: some View {
         NavigationSplitView {
@@ -32,6 +34,7 @@ struct MainView: View {
                 StatusBanner(goToProfiles: { sectionName = NavSection.profiles.rawValue })
                 ZStack {
                     switch section {
+                    case .dashboard: DashboardView(navigate: { sectionName = $0.rawValue }).transition(.opacity)
                     case .containers: ContainersView().transition(.opacity)
                     case .images: ImagesView().transition(.opacity)
                     case .volumes: VolumesView().transition(.opacity)

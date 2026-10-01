@@ -43,6 +43,17 @@ app_ids = {c["id"] for c in state["containers"]}
 assert {i[:12] for i in docker_ids} == {i[:12] for i in app_ids}, f"container mismatch: docker={docker_ids} app={app_ids}"
 total = sum(g["total"] for g in state["groups"])
 assert total == len(state["containers"]), "groups do not cover all containers"
+# Dashboard data: disk breakdown must match docker, VM disk must be read from the Docker data mount.
+df = {r["Type"]: r for r in map(json.loads, subprocess.run(
+    ["docker", "system", "df", "--format", "{{json .}}"], capture_output=True, text=True, check=True).stdout.splitlines())}
+usage = {e["type"]: e for e in (state["diskUsage"] or [])}
+assert usage, "dashboard has no disk usage"
+assert usage["images"]["count"] == int(df["Images"]["TotalCount"]), "image count differs from docker system df"
+assert state["vmDisk"] and state["vmDisk"]["total"] > 0 and state["vmDisk"]["used"] > 0, "no VM disk reading"
+assert state["vmDisk"]["used"] <= state["vmDisk"]["total"], "VM disk used exceeds total"
+assert state["historySamples"] >= 1, "no sparkline samples"
+print(f"ok  dashboard: vm disk {state['vmDisk']['used']//2**30}/{state['vmDisk']['total']//2**30} GiB on {state['vmDisk']['mount']}, "
+      f"{len(state['attention'])} attention item(s)")
 print(f"ok  app read {len(state['containers'])} containers in {len(state['groups'])} groups, "
       f"{state['images']} images, {state['volumes']} volumes, {state['networks']} networks")
 PY

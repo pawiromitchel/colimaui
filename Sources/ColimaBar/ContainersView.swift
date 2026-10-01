@@ -41,15 +41,28 @@ struct ContainersView: View {
         }
         .confirm($pendingDelete)
         .onAppear {
+            applyRequestedSelection()
             // Lets the headless snapshot open a container: COLIMABAR_SELECT=<container name>.
             if selection == nil, let name = ProcessInfo.processInfo.environment["COLIMABAR_SELECT"],
                let match = store.containers.first(where: { $0.name == name }) {
                 selection = .container(match.id)
             }
         }
+        .onChange(of: store.requestedSelection) { applyRequestedSelection() }
         .onChange(of: store.containers) {
             if case .container(let id) = selection, store.container(id: id) == nil { selection = nil }
             if case .group(let id) = selection, !store.groups.contains(where: { $0.id == id }) { selection = nil }
+        }
+    }
+
+    /// The dashboard asks to open a container or stack: `container:<id>` or `group:<id>`.
+    private func applyRequestedSelection() {
+        guard let request = store.requestedSelection else { return }
+        store.requestedSelection = nil
+        if request.hasPrefix("container:") {
+            selection = .container(String(request.dropFirst("container:".count)))
+        } else if request.hasPrefix("group:") {
+            selection = .group(String(request.dropFirst("group:".count)))
         }
     }
 

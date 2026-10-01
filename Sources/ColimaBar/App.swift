@@ -18,6 +18,7 @@ struct ColimaBarApp: App {
         } else if let path = Launch.argument("--snapshot") {
             Task { @MainActor in
                 await store.refresh()
+                await store.refresh() // a second sample so the sparklines have a line to draw
                 Launch.snapshot(of: store, to: path)
                 exit(0)
             }

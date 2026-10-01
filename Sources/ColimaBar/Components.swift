@@ -97,11 +97,12 @@ struct LoadingState: View {
 
 struct Card<Content: View>: View {
     var dimmed = false
+    var minHeight: CGFloat?
     @ViewBuilder var content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: 8) { content }
             .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .topLeading)
             .background(dimmed ? Color.secondary.opacity(0.06) : Color(nsColor: .controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))

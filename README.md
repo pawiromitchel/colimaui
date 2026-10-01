@@ -4,6 +4,7 @@ A native macOS app for [Colima](https://github.com/abiosoft/colima), laid out li
 
 ## Features
 
+- **Dashboard** (opens first): CPU and memory sparklines, VM disk, Docker disk breakdown with prune, top containers, stack cards, and a "needs attention" list.
 - **Containers**, grouped by Compose stack (or by image, or flat). Stack rows show how many services are running and the combined CPU and memory. Start, stop, restart or delete a single container or a whole stack.
 - **Detail pane** with live logs (filter, follow, timestamps), merged logs for a whole stack, `docker inspect`, and a shell button that opens Terminal.
 - **Images, Volumes, Networks** with usage hints, prune, and pull.

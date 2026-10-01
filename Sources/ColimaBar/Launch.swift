@@ -23,6 +23,12 @@ enum Launch {
                  "stack": $0.composeProject ?? NSNull(), "ports": $0.ports.map(\.label)] as [String: Any]
             },
             "groups": store.groups.map { ["title": $0.title, "running": $0.runningCount, "total": $0.containers.count] as [String: Any] },
+            "diskUsage": store.diskUsage.map { usage in
+                usage.entries.map { ["type": $0.kind.rawValue, "count": $0.totalCount, "bytes": $0.sizeBytes, "reclaimable": $0.reclaimableBytes] as [String: Any] }
+            } ?? NSNull(),
+            "vmDisk": store.vmDisk.map { ["mount": $0.mount, "total": $0.totalBytes, "used": $0.usedBytes] as [String: Any] } ?? NSNull(),
+            "attention": store.attention.map(\.message),
+            "historySamples": store.history.samples.count,
             "images": store.images.count,
             "volumes": store.volumes.count,
             "networks": store.networks.count,

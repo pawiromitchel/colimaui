@@ -25,6 +25,12 @@ public final class ColimaStore {
     public private(set) var activeContext: String?
     public private(set) var lastRefresh: Date?
     public private(set) var toolMissing: String?
+    public private(set) var diskUsage: DockerDiskUsage?
+    public private(set) var vmDisk: VMDisk?
+    public private(set) var history = MetricsHistory()
+
+    /// Set by the dashboard to open a container (`container:<id>`) or stack (`group:<id>`) on the Containers page.
+    public var requestedSelection: String?
 
     public var selectedProfileName: String = "default"
     public var groupMode: GroupMode = .stack
@@ -33,6 +39,9 @@ public final class ColimaStore {
     @ObservationIgnored public let colima: ColimaClient
     @ObservationIgnored private let runner: CommandRunning
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    @ObservationIgnored private var lastDiskRefresh: Date?
+    @ObservationIgnored private var historyProfile: String?
+    public static let diskRefreshInterval: TimeInterval = 30
 
     public init(runner: CommandRunning = ProcessRunner()) {
         self.runner = runner
@@ -62,6 +71,14 @@ public final class ColimaStore {
         selectedProfile.map { busyProfiles.contains($0.name) } ?? false
     }
 
+    public var attention: [AttentionItem] { Attention.items(containers: containers, vmDisk: vmDisk) }
+
+    public var stackCount: Int { Set(containers.compactMap(\.composeProject)).count }
+
+    public var runningStats: [(container: Container, stats: ContainerStats)] {
+        containers.filter(\.isRunning).compactMap { c in stats[c.id].map { (c, $0) } }
+    }
+
     public var runningContainerCount: Int { containers.filter(\.isRunning).count }
 
     public func container(id: String) -> Container? { containers.first { $0.id == id } }
@@ -89,6 +106,7 @@ public final class ColimaStore {
         activeContext = await colima.currentContext()
         guard let client = docker else {
             containers = []; images = []; volumes = []; networks = []; stats = [:]
+            diskUsage = nil; vmDisk = nil; lastDiskRefresh = nil; history.reset()
             lastRefresh = Date()
             return
         }
@@ -105,6 +123,30 @@ public final class ColimaStore {
         // Lists are ready: show them now. `docker stats` is slow, so its numbers fill in afterwards.
         lastRefresh = Date()
         if let st = await s { stats = Dictionary(st.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a }) }
+        recordSample()
+        await refreshDisk()
+    }
+
+    /// Adds a CPU/memory point for the sparklines. CPU is shown as a share of the whole VM.
+    func recordSample() {
+        guard let profile = selectedProfile else { return }
+        if historyProfile != profile.name { history.reset(); historyProfile = profile.name }
+        let values = stats.values
+        let cpu = values.reduce(0) { $0 + $1.cpuPercent } / Double(max(profile.cpus, 1))
+        let memory = values.compactMap { Parsing.parseSize($0.memoryUsage) }.reduce(0, +)
+        history.append(MetricSample(cpuPercent: min(cpu, 100), memoryBytes: memory))
+    }
+
+    /// Disk numbers are slower to gather than stats, so they refresh on their own, slower, schedule.
+    public func refreshDisk(force: Bool = false) async {
+        guard let client = docker, let profile = selectedProfile else { return }
+        if !force, let last = lastDiskRefresh, Date().timeIntervalSince(last) < Self.diskRefreshInterval { return }
+        lastDiskRefresh = Date()
+        async let usage = try? await client.diskUsage()
+        async let disk = colima.vmDisk(profile: profile.name)
+        let (u, d) = await (usage, disk)
+        if let u { diskUsage = u }
+        vmDisk = d
     }
 
     public func refreshProfiles() async {
@@ -230,7 +272,7 @@ public final class ColimaStore {
         await refresh()
     }
 
-    public enum PruneTarget: Sendable { case images, volumes, system }
+    public enum PruneTarget: Sendable { case images, volumes, buildCache, system }
 
     public func prune(_ target: PruneTarget) async {
         guard let client = docker else { return }
@@ -239,11 +281,13 @@ public final class ColimaStore {
             switch target {
             case .images: out = try await client.pruneImages()
             case .volumes: out = try await client.pruneVolumes()
+            case .buildCache: out = try await client.pruneBuildCache()
             case .system: out = try await client.pruneSystem()
             }
             log(.info, out.split(separator: "\n").last.map(String.init) ?? "Pruned")
         } catch { log(.error, error.localizedDescription) }
         await refresh()
+        await refreshDisk(force: true)
     }
 
     public func pullImage(_ reference: String) async {

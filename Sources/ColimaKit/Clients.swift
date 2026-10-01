@@ -60,6 +60,12 @@ public struct ColimaClient: Sendable {
         _ = try await runner.runChecked("docker", arguments: ["context", "use", profile.dockerContext])
     }
 
+    /// Disk usage inside the VM, or nil when the VM can't be reached.
+    public func vmDisk(profile: String) async -> VMDisk? {
+        guard let out = try? await runner.runChecked("colima", arguments: ["ssh", "--profile", profile, "--", "df", "-k"]) else { return nil }
+        return Parsing.vmDisk(from: out)
+    }
+
     public func currentContext() async -> String? {
         guard let out = try? await runner.runChecked("docker", arguments: ["context", "show"]) else { return nil }
         return out.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -125,6 +131,10 @@ public struct DockerClient: Sendable {
     public func removeNetwork(_ id: String) async throws { _ = try await docker(["network", "rm", id]) }
     public func pruneImages() async throws -> String { try await docker(["image", "prune", "-f"]) }
     public func pruneVolumes() async throws -> String { try await docker(["volume", "prune", "-f"]) }
+    public func pruneBuildCache() async throws -> String { try await docker(["builder", "prune", "-f"]) }
+    public func diskUsage() async throws -> DockerDiskUsage? {
+        Parsing.diskUsage(from: try await docker(["system", "df", "--format", "{{json .}}"]))
+    }
     public func pruneSystem() async throws -> String { try await docker(["system", "prune", "-f"]) }
 
     public func inspect(_ id: String) async throws -> String {
