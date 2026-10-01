@@ -25,6 +25,26 @@ struct MainView: View {
 
     private var section: NavSection { NavSection(rawValue: sectionName) ?? .dashboard }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var slideOffset = CGSize.zero
+    @State private var slideOpacity = 1.0
+
+    /// The new page slides in a short way from the direction it sits in the sidebar, then settles.
+    private func slideIn(from old: String, to new: String) {
+        guard !reduceMotion,
+              let from = NavSection(rawValue: old).flatMap({ NavSection.allCases.firstIndex(of: $0) }),
+              let to = NavSection(rawValue: new).flatMap({ NavSection.allCases.firstIndex(of: $0) }) else { return }
+        slideOffset = CGSize(width: 0, height: to > from ? 18 : -18)
+        slideOpacity = 0
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(16))
+            withAnimation(.smooth(duration: 0.28)) {
+                slideOffset = .zero
+                slideOpacity = 1
+            }
+        }
+    }
+
     var body: some View {
         NavigationSplitView {
             SidebarView(sectionName: $sectionName)
@@ -34,17 +54,21 @@ struct MainView: View {
                 StatusBanner(goToProfiles: { sectionName = NavSection.profiles.rawValue })
                 ZStack {
                     switch section {
-                    case .dashboard: DashboardView(navigate: { sectionName = $0.rawValue }).transition(.opacity)
-                    case .containers: ContainersView().transition(.opacity)
-                    case .images: ImagesView().transition(.opacity)
-                    case .volumes: VolumesView().transition(.opacity)
-                    case .networks: NetworksView().transition(.opacity)
-                    case .profiles: ProfilesView().transition(.opacity)
+                    case .dashboard: DashboardView(navigate: { sectionName = $0.rawValue })
+                    case .containers: ContainersView()
+                    case .images: ImagesView()
+                    case .volumes: VolumesView()
+                    case .networks: NetworksView()
+                    case .profiles: ProfilesView()
                     }
                 }
-                .animation(.easeInOut(duration: 0.18), value: sectionName)
+                .offset(slideOffset)
+                .opacity(slideOpacity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
             }
         }
+        .onChange(of: sectionName) { old, new in slideIn(from: old, to: new) }
         .frame(minWidth: 860, minHeight: 520)
     }
 }
