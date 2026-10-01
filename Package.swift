@@ -2,15 +2,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "ColimaBar",
+    name: "ColimaUI",
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "ColimaKit", targets: ["ColimaKit"]),
-        .executable(name: "ColimaBar", targets: ["ColimaBar"]),
+        .executable(name: "ColimaUI", targets: ["ColimaUI"]),
     ],
     targets: [
         .target(name: "ColimaKit"),
-        .executableTarget(name: "ColimaBar", dependencies: ["ColimaKit"]),
+        .executableTarget(name: "ColimaUI", dependencies: ["ColimaKit"]),
         .testTarget(name: "ColimaKitTests", dependencies: ["ColimaKit"]),
     ]
 )

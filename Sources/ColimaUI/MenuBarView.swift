@@ -17,7 +17,7 @@ struct MenuBarLabel: View {
 
     var body: some View {
         Image(nsImage: Self.images[state] ?? LlamaArt.menuBarImage(.running))
-            .accessibilityLabel("ColimaBar")
+            .accessibilityLabel("ColimaUI")
     }
 }
 
@@ -130,7 +130,7 @@ struct MenuBarView: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Button { openMain() } label: { MenuItemLabel(title: "Open ColimaBar", hint: "⌘O") }
+            Button { openMain() } label: { MenuItemLabel(title: "Open ColimaUI", hint: "⌘O") }
                 .buttonStyle(.plain).keyboardShortcut("o")
             if store.profiles.count > 1 {
                 Menu {

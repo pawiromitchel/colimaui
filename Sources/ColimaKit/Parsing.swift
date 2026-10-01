@@ -1,6 +1,6 @@
 import Foundation
 
-/// Parsers for the CLI output formats ColimaBar depends on. Kept pure so they can be unit tested.
+/// Parsers for the CLI output formats ColimaUI depends on. Kept pure so they can be unit tested.
 public enum Parsing {
     /// Parses newline-delimited JSON objects, skipping blank or malformed lines.
     public static func jsonLines(_ text: String) -> [[String: Any]] {

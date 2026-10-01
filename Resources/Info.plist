@@ -2,10 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key><string>ColimaBar</string>
-    <key>CFBundleDisplayName</key><string>ColimaBar</string>
-    <key>CFBundleIdentifier</key><string>com.pawiromitchel.ColimaBar</string>
-    <key>CFBundleExecutable</key><string>ColimaBar</string>
+    <key>CFBundleName</key><string>ColimaUI</string>
+    <key>CFBundleDisplayName</key><string>ColimaUI</string>
+    <key>CFBundleIdentifier</key><string>com.pawiromitchel.ColimaUI</string>
+    <key>CFBundleExecutable</key><string>ColimaUI</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>0.1.0</string>
@@ -13,7 +13,7 @@
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
-    <key>NSAppleEventsUsageDescription</key><string>ColimaBar opens Terminal to run a shell inside a container.</string>
+    <key>NSAppleEventsUsageDescription</key><string>ColimaUI opens Terminal to run a shell inside a container.</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
 </dict>
 </plist>

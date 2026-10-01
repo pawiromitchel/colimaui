@@ -15,8 +15,8 @@ run_with_timeout() { # seconds, command...
 }
 
 ./scripts/bundle.sh
-APP=build/ColimaBar.app
-EXE="$APP/Contents/MacOS/ColimaBar"
+APP=build/ColimaUI.app
+EXE="$APP/Contents/MacOS/ColimaUI"
 
 [ -x "$EXE" ] || fail "missing executable"
 plutil -lint "$APP/Contents/Info.plist" >/dev/null || fail "invalid Info.plist"
@@ -73,11 +73,11 @@ assert d[:8]==b'\x89PNG\r\n\x1a\n','not a PNG'
 w,h=struct.unpack('>II',d[16:24]); assert w>=800 and h>=500,(w,h)
 print(f'ok  snapshot {w}x{h}')"
 # Launch the real GUI (window + menu bar item) and make sure it stays up.
-pkill -x ColimaBar 2>/dev/null || true
+pkill -x ColimaUI 2>/dev/null || true
 sleep 1
 open -n "$APP"
 sleep 6
-pgrep -x ColimaBar >/dev/null || fail "app crashed on launch"
-pkill -x ColimaBar || true
+pgrep -x ColimaUI >/dev/null || fail "app crashed on launch"
+pkill -x ColimaUI || true
 echo "ok  packaged app launched and stayed running"
 echo "e2e passed"

@@ -42,8 +42,8 @@ struct ContainersView: View {
         .confirm($pendingDelete)
         .onAppear {
             applyRequestedSelection()
-            // Lets the headless snapshot open a container: COLIMABAR_SELECT=<container name>.
-            if selection == nil, let name = ProcessInfo.processInfo.environment["COLIMABAR_SELECT"],
+            // Lets the headless snapshot open a container: COLIMAUI_SELECT=<container name>.
+            if selection == nil, let name = ProcessInfo.processInfo.environment["COLIMAUI_SELECT"],
                let match = store.containers.first(where: { $0.name == name }) {
                 selection = .container(match.id)
             }

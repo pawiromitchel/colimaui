@@ -44,8 +44,8 @@ enum Launch {
     @MainActor
     static func snapshot(of store: ColimaStore, to path: String) {
         _ = NSApplication.shared
-        // COLIMABAR_SNAPSHOT=menu|sidebar renders just that view instead of the main window.
-        let target = ProcessInfo.processInfo.environment["COLIMABAR_SNAPSHOT"] ?? "main"
+        // COLIMAUI_SNAPSHOT=menu|sidebar renders just that view instead of the main window.
+        let target = ProcessInfo.processInfo.environment["COLIMAUI_SNAPSHOT"] ?? "main"
         let size: NSSize
         let root: AnyView
         switch target {

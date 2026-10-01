@@ -3,7 +3,7 @@ import ServiceManagement
 import ColimaKit
 
 @main
-struct ColimaBarApp: App {
+struct ColimaUIApp: App {
     @State private var store = ColimaStore()
     @AppStorage("refreshSeconds") private var refreshSeconds = 5
 
@@ -28,7 +28,7 @@ struct ColimaBarApp: App {
     }
 
     var body: some Scene {
-        Window("ColimaBar", id: "main") {
+        Window("ColimaUI", id: "main") {
             MainView().environment(store)
         }
         .defaultSize(width: 1100, height: 700)

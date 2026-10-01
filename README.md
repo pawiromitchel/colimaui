@@ -1,4 +1,4 @@
-# ColimaBar
+# ColimaUI
 
 A native macOS app for [Colima](https://github.com/abiosoft/colima), laid out like Docker Desktop. Built with Swift and SwiftUI; it needs no Xcode, only the Command Line Tools.
 
@@ -14,8 +14,8 @@ A native macOS app for [Colima](https://github.com/abiosoft/colima), laid out li
 ## Build and run
 
 ```bash
-./scripts/bundle.sh        # builds build/ColimaBar.app (ad-hoc signed)
-open build/ColimaBar.app
+./scripts/bundle.sh        # builds build/ColimaUI.app (ad-hoc signed)
+open build/ColimaUI.app
 ```
 
 Requires macOS 14+, and `colima` and `docker` installed with Homebrew.
@@ -24,17 +24,17 @@ Requires macOS 14+, and `colima` and `docker` installed with Homebrew.
 
 ```bash
 ./scripts/test.sh                      # unit tests, no Colima needed
-COLIMABAR_E2E=1 ./scripts/test.sh      # also runs live tests against your running Colima
+COLIMAUI_E2E=1 ./scripts/test.sh      # also runs live tests against your running Colima
 ./scripts/e2e-app.sh                   # builds the .app, launches it, checks it against `docker ps`
 ```
 
-The live tests only create and remove containers named `colimabar-e2e-*`. They never stop the VM.
+The live tests only create and remove containers named `colimaui-e2e-*`. They never stop the VM.
 `test.sh` passes the Command Line Tools' Swift Testing framework path to SwiftPM, which doesn't add it on its own.
 
 ## Layout
 
 - `Sources/ColimaKit`: models, CLI parsing, `colima`/`docker` clients, grouping, and the observable `ColimaStore`. No UI, fully tested.
-- `Sources/ColimaBar`: SwiftUI app (main window, menu bar, settings).
+- `Sources/ColimaUI`: SwiftUI app (main window, menu bar, settings).
 - `scripts/`: bundling, icon generation, tests.
 
 ## How it talks to Colima

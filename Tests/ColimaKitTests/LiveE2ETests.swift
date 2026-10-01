@@ -2,10 +2,10 @@ import Testing
 import Foundation
 @testable import ColimaKit
 
-/// End-to-end checks against a real, running Colima. Opt in with `COLIMABAR_E2E=1 ./scripts/test.sh`.
-/// The tests only create and remove containers named `colimabar-e2e-*`; they never touch the VM or your containers.
+/// End-to-end checks against a real, running Colima. Opt in with `COLIMAUI_E2E=1 ./scripts/test.sh`.
+/// The tests only create and remove containers named `colimaui-e2e-*`; they never touch the VM or your containers.
 @MainActor
-@Suite(.serialized, .enabled(if: ProcessInfo.processInfo.environment["COLIMABAR_E2E"] == "1"))
+@Suite(.serialized, .enabled(if: ProcessInfo.processInfo.environment["COLIMAUI_E2E"] == "1"))
 struct LiveE2ETests {
     let runner = ProcessRunner()
 
@@ -22,8 +22,8 @@ struct LiveE2ETests {
 
     @Test func containerLifecycleThroughTheStore() async throws {
         let profile = try await runningProfile()
-        let name = "colimabar-e2e-\(UUID().uuidString.prefix(8).lowercased())"
-        let project = "colimabar-e2e"
+        let name = "colimaui-e2e-\(UUID().uuidString.prefix(8).lowercased())"
+        let project = "colimaui-e2e"
 
         let hasImage = (try? await docker(profile, ["image", "inspect", "alpine:latest"])) != nil
         if !hasImage { _ = try await docker(profile, ["pull", "alpine:latest"]) }
