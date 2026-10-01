@@ -82,7 +82,7 @@ struct MenuBarView: View {
             }
             .padding(.horizontal, 8).padding(.vertical, 2)
             if !collapsed.contains(group.id) {
-                ForEach(group.containers) { containerRow($0, indent: true) }
+                ForEach(group.containers) { containerRow($0, indent: true).transition(.opacity.combined(with: .move(edge: .top))) }
             }
         }
     }
@@ -129,7 +129,9 @@ struct MenuBarView: View {
     }
 
     private func toggle(_ id: String) {
-        if collapsed.contains(id) { collapsed.remove(id) } else { collapsed.insert(id) }
+        withAnimation(.smooth(duration: 0.2)) {
+            if collapsed.contains(id) { collapsed.remove(id) } else { collapsed.insert(id) }
+        }
     }
 
     private func openMain() {

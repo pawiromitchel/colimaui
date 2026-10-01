@@ -30,13 +30,16 @@ struct MainView: View {
         } detail: {
             VStack(spacing: 0) {
                 StatusBanner(goToProfiles: { sectionName = NavSection.profiles.rawValue })
-                switch section {
-                case .containers: ContainersView()
-                case .images: ImagesView()
-                case .volumes: VolumesView()
-                case .networks: NetworksView()
-                case .profiles: ProfilesView()
+                ZStack {
+                    switch section {
+                    case .containers: ContainersView().transition(.opacity)
+                    case .images: ImagesView().transition(.opacity)
+                    case .volumes: VolumesView().transition(.opacity)
+                    case .networks: NetworksView().transition(.opacity)
+                    case .profiles: ProfilesView().transition(.opacity)
+                    }
                 }
+                .animation(.easeInOut(duration: 0.18), value: sectionName)
             }
         }
         .frame(minWidth: 860, minHeight: 520)

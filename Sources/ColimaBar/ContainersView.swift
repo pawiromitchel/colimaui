@@ -14,13 +14,18 @@ struct ContainersView: View {
 
     var body: some View {
         @Bindable var store = store
-        Group {
+        ZStack {
             if let selection, let detail = detail(for: selection) {
                 detail
+                    .transition(.move(edge: .trailing))
+                    .zIndex(1)
             } else {
                 list
+                    .transition(.move(edge: .leading).combined(with: .opacity))
             }
         }
+        .clipped()
+        .animation(.smooth(duration: 0.3), value: selection)
         .navigationTitle("Containers")
         .searchable(text: $store.searchText, prompt: "Search")
         .toolbar {
@@ -50,7 +55,7 @@ struct ContainersView: View {
 
     private var list: some View {
         let groups = store.groups
-        return Group {
+        return ZStack {
             if !store.hasLoaded {
                 LoadingState(message: "Loading containers…")
             } else if store.selectedProfileIsBusy && store.containers.isEmpty {
@@ -72,6 +77,7 @@ struct ContainersView: View {
                                                  compact: false,
                                                  selected: selection == .container(container.id),
                                                  pendingDelete: $pendingDelete)
+                                        .transition(.opacity.combined(with: .move(edge: .top)))
                                         .onTapGesture { selection = .container(container.id) }
                                 }
                             }
@@ -80,12 +86,17 @@ struct ContainersView: View {
                 }
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: store.hasLoaded)
     }
 
     private func groupRow(_ group: ContainerGroup) -> some View {
         GroupRow(group: group, compact: false, collapsed: collapsed.contains(group.id),
                  selected: selection == .group(group.id),
-                 toggle: { if collapsed.contains(group.id) { collapsed.remove(group.id) } else { collapsed.insert(group.id) } },
+                 toggle: {
+                withAnimation(.smooth(duration: 0.25)) {
+                    if collapsed.contains(group.id) { collapsed.remove(group.id) } else { collapsed.insert(group.id) }
+                }
+            },
                  pendingDelete: $pendingDelete)
             .onTapGesture { selection = .group(group.id) }
     }
@@ -295,11 +306,14 @@ struct ContainerDetail: View {
             Picker("", selection: $tab) { ForEach(Tab.allCases) { Text($0.rawValue).tag($0) } }
                 .pickerStyle(.segmented).labelsHidden().padding(.horizontal, 12).padding(.bottom, 8)
             Divider()
-            switch tab {
-            case .logs: LogsView(sources: [LogSource(id: container.id, label: nil)])
-            case .inspect: InspectView(id: container.id)
-            case .info: info
+            ZStack {
+                switch tab {
+                case .logs: LogsView(sources: [LogSource(id: container.id, label: nil)]).transition(.opacity)
+                case .inspect: InspectView(id: container.id).transition(.opacity)
+                case .info: info.transition(.opacity)
+                }
             }
+            .animation(.easeInOut(duration: 0.15), value: tab)
         }
     }
 
