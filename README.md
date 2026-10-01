@@ -155,3 +155,7 @@ The live tests only create and remove containers named `colimaui-e2e-*`. They ne
 **Homebrew also installed a `docker` formula, and I already have Docker Desktop.** The cask lists `docker` as a dependency so a fresh Mac gets everything. If your `docker` command comes from Docker Desktop, Homebrew leaves its copy unlinked and your existing one keeps working. `brew uninstall docker` removes it if you prefer.
 
 **The dashboard says my VM disk couldn't be read.** ColimaUI reads it with `colima ssh -- df`, which needs a running VM.
+
+## License
+
+[MIT](LICENSE)
