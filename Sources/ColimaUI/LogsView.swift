@@ -46,6 +46,11 @@ final class LogModel {
     }
 }
 
+/// Lets the README screenshot renderer show log lines without a live stream, which doesn't start offscreen.
+enum ScreenshotSeed {
+    @MainActor static var logLines: [String]?
+}
+
 struct LogsView: View {
     @Environment(ColimaStore.self) private var store
     var sources: [LogSource]
@@ -101,6 +106,11 @@ struct LogsView: View {
             .padding(8)
         }
         .task(id: TaskKey(sources: sources, timestamps: timestamps, profile: store.selectedProfile?.name)) {
+            if let seed = ScreenshotSeed.logLines {
+                model.clear()
+                seed.forEach { model.append(label: nil, text: $0) }
+                return
+            }
             guard let client = store.docker else { return }
             await model.run(client: client, sources: sources, timestamps: timestamps)
         }

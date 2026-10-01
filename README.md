@@ -1,42 +1,157 @@
-# ColimaUI
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="ColimaUI icon: a llama carrying two shipping containers">
+</p>
 
-A native macOS app for [Colima](https://github.com/abiosoft/colima), laid out like Docker Desktop. Built with Swift and SwiftUI; it needs no Xcode, only the Command Line Tools.
+<h1 align="center">ColimaUI</h1>
 
-## Features
+<p align="center">
+  A native macOS app for <a href="https://github.com/abiosoft/colima">Colima</a>, laid out like Docker Desktop.<br>
+  See your stacks, containers, logs and disk use at a glance, without Docker Desktop.
+</p>
 
-- **Dashboard** (opens first): CPU and memory sparklines, VM disk, Docker disk breakdown with prune, top containers, stack cards, and a "needs attention" list.
-- **Containers**, grouped by Compose stack (or by image, or flat). Stack rows show how many services are running and the combined CPU and memory. Start, stop, restart or delete a single container or a whole stack.
-- **Detail pane** with live logs (filter, follow, timestamps), merged logs for a whole stack, `docker inspect`, and a shell button that opens Terminal.
-- **Images, Volumes, Networks** with usage hints, prune, and pull.
-- **Profiles** as cards: start, stop, edit CPU, memory, disk and Kubernetes, create or delete profiles, switch the Docker context, SSH in.
-- **Menu bar item** to control the VM, stacks and individual containers without opening the window.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
+    <img src="docs/screenshots/dashboard.png" width="860" alt="The ColimaUI dashboard">
+  </picture>
+</p>
 
-## Build and run
+> The screenshots show a built-in demo setup, not real containers. To try the app on it, run `open -a ColimaUI --args --demo`.
+
+## Install
 
 ```bash
-./scripts/bundle.sh        # builds build/ColimaUI.app (ad-hoc signed)
+brew tap pawiromitchel/colimaui https://github.com/pawiromitchel/colimaui
+brew install --cask colimaui
+```
+
+That's all it takes on a fresh Mac. The cask installs `colima` and `docker` through Homebrew if you don't have them yet. To update later:
+
+```bash
+brew upgrade --cask colimaui
+```
+
+Requires macOS 14 (Sonoma) or newer, on Apple Silicon or Intel.
+
+<details>
+<summary>Install without Homebrew</summary>
+
+Download `ColimaUI-<version>.zip` from the [latest release](https://github.com/pawiromitchel/colimaui/releases/latest), unzip it, and drag **ColimaUI.app** to Applications.
+
+The app is signed ad hoc rather than notarized by Apple, so macOS blocks the first launch. Either right-click the app and choose **Open**, or clear the flag once:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ColimaUI.app
+```
+
+You'll also need Colima and Docker's command-line tool: `brew install colima docker`.
+</details>
+
+### If Colima or Docker isn't installed yet
+
+You don't have to work it out. ColimaUI checks for `colima` and `docker` when it opens and, if either is missing, shows what's needed with a one-click **Install in Terminal** button. It watches for the install to finish and moves on to the dashboard by itself. No Homebrew either? It tells you and links to [brew.sh](https://brew.sh).
+
+<p align="center">
+  <img src="docs/screenshots/setup.png" width="640" alt="The first-run screen offering to install Colima and Docker">
+</p>
+
+Once the tools are there but no VM exists yet, the dashboard offers **Start Colima**, which creates the default profile for you. The first start downloads a small Linux image and takes a minute or two.
+
+## What it does
+
+### Dashboard
+
+The page the app opens on. CPU and memory with a short sparkline, how full the VM disk is, and a running count. **Top containers** ranks by memory or CPU, the **disk usage** bar splits images, volumes and build cache and shows what a prune would free (build cache is usually the big one), and each Compose **stack** gets a card with its status and clickable ports.
+
+**Needs attention** lists crashed or restarting containers and a nearly full disk, with a link to the logs or the fix. The same signal puts a small badge on the menu bar icon.
+
+### Containers, grouped like Docker Desktop
+
+<p align="center">
+  <img src="docs/screenshots/containers.png" width="860" alt="Containers grouped by Compose stack">
+</p>
+
+- Containers are grouped by **Compose stack**, with the running count and combined CPU and memory on each stack row. Group by image or switch grouping off from the toolbar.
+- Start, stop, restart or delete a single container or a whole stack. Ports are links that open in your browser.
+- Search by name, image, stack or port.
+
+### Logs and details
+
+<p align="center">
+  <img src="docs/screenshots/container-logs.png" width="860" alt="Live container logs">
+</p>
+
+Click a container to open it full-width: live logs with filter, follow and timestamps, `docker inspect`, and an info tab. **Shell** opens a session in Terminal. Click a stack instead and you get its services merged into one color-coded log.
+
+### Images, volumes, networks and profiles
+
+<p align="center">
+  <img src="docs/screenshots/images.png" width="420" alt="Images list showing which containers use each image">
+  <img src="docs/screenshots/profiles.png" width="420" alt="Colima profile cards">
+</p>
+
+- **Images** show which containers use them, and you can pull, delete and prune.
+- **Volumes** show which stack they belong to and can be pruned. **Networks** can be listed and deleted.
+- **Profiles** are cards: start, stop, edit CPU, memory, disk and Kubernetes, create or delete profiles, switch the Docker context, or SSH in.
+
+### Menu bar
+
+<p align="center">
+  <img src="docs/screenshots/menu-bar.png" width="300" alt="The menu bar popover">
+</p>
+
+Control the VM, whole stacks and single containers without opening the window. The llama in the menu bar is dimmed when the VM is stopped and gets a small dot when something needs attention.
+
+## How it works
+
+ColimaUI is a thin window over the tools you already have. It runs the `colima` and `docker` command-line tools and points `DOCKER_HOST` at the profile's own socket (`~/.colima/<profile>/docker.sock`), so it never changes your active Docker context unless you press **Use context**. Container lists refresh every few seconds (2 to 30, in Settings), and logs stream live.
+
+The app isn't sandboxed, because it has to run those tools.
+
+## Releases
+
+Every merge to `main` publishes a new version automatically:
+
+1. The release workflow runs the tests and builds a universal (Apple Silicon and Intel) `ColimaUI.app`.
+2. It publishes a GitHub release `vX.Y.Z` with `ColimaUI-X.Y.Z.zip` and its checksum.
+3. It updates the Homebrew cask in [`Casks/colimaui.rb`](Casks/colimaui.rb) to point at it.
+
+The version bumps by **patch** by default. Put the label `minor` or `major` on the pull request to bump those instead, or `skip-release` to publish nothing for that merge. Merges that only change Markdown, `docs/` or the cask don't release.
+
+## Build from source
+
+You only need the Xcode Command Line Tools, not Xcode.
+
+```bash
+git clone https://github.com/pawiromitchel/colimaui.git
+cd colimaui
+./scripts/bundle.sh          # builds build/ColimaUI.app
 open build/ColimaUI.app
 ```
 
-Requires macOS 14+, and `colima` and `docker` installed with Homebrew.
-
-## Tests
-
 ```bash
-./scripts/test.sh                      # unit tests, no Colima needed
-COLIMAUI_E2E=1 ./scripts/test.sh      # also runs live tests against your running Colima
-./scripts/e2e-app.sh                   # builds the .app, launches it, checks it against `docker ps`
+./scripts/test.sh                       # unit tests, no Colima needed
+COLIMAUI_E2E=1 ./scripts/test.sh        # also runs live tests against your running Colima
+./scripts/e2e-app.sh                    # builds the app, launches it, checks it against `docker ps`
+VERSION=1.2.3 ./scripts/package.sh      # universal release zip in dist/
+./scripts/screenshots.sh                # regenerates the screenshots above from the demo setup
 ```
 
-The live tests only create and remove containers named `colimaui-e2e-*`. They never stop the VM.
-`test.sh` passes the Command Line Tools' Swift Testing framework path to SwiftPM, which doesn't add it on its own.
+The live tests only create and remove containers named `colimaui-e2e-*`. They never stop your VM.
 
-## Layout
+### Layout
 
-- `Sources/ColimaKit`: models, CLI parsing, `colima`/`docker` clients, grouping, and the observable `ColimaStore`. No UI, fully tested.
-- `Sources/ColimaUI`: SwiftUI app (main window, menu bar, settings).
-- `scripts/`: bundling, icon generation, tests.
+| Path | What's in it |
+|---|---|
+| `Sources/ColimaKit` | Models, CLI parsing, the `colima` and `docker` clients, grouping, the observable `ColimaStore`, and the demo setup. No UI, fully tested. |
+| `Sources/ColimaUI` | The SwiftUI app: window, menu bar, settings, and the icon artwork (drawn in code). |
+| `scripts/` | Bundling, packaging, tests, screenshots, cask rendering. |
+| `.github/workflows` | CI for pull requests, and the release workflow. |
 
-## How it talks to Colima
+## Troubleshooting
 
-It runs the `colima` and `docker` CLIs, pointing `DOCKER_HOST` at `~/.colima/<profile>/docker.sock`, so it never changes your active Docker context unless you press "Use context". The app isn't sandboxed because it has to run those tools.
+**"ColimaUI can't be opened because Apple cannot check it."** Installed by hand? See [Install without Homebrew](#install). The Homebrew cask clears this for you.
+
+**Homebrew also installed a `docker` formula, and I already have Docker Desktop.** The cask lists `docker` as a dependency so a fresh Mac gets everything. If your `docker` command comes from Docker Desktop, Homebrew leaves its copy unlinked and your existing one keeps working. `brew uninstall docker` removes it if you prefer.
+
+**The dashboard says my VM disk couldn't be read.** ColimaUI reads it with `colima ssh -- df`, which needs a running VM.

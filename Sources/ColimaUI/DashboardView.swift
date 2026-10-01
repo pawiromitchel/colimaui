@@ -324,7 +324,7 @@ struct DashboardView: View {
             }
             HStack(spacing: 6) {
                 ForEach(Array(ports.prefix(2).enumerated()), id: \.offset) { _, port in
-                    Text("\(port.hostPort ?? port.containerPort) ↗").font(.caption).foregroundStyle(Color.accentColor)
+                    Text(verbatim: "\(port.hostPort ?? port.containerPort) ↗").font(.caption).foregroundStyle(Color.accentColor)
                 }
                 if memory > 0 { Text(Format.bytes(memory)).font(.caption).foregroundStyle(.secondary) }
             }

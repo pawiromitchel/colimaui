@@ -8,11 +8,19 @@ struct ColimaUIApp: App {
     @AppStorage("refreshSeconds") private var refreshSeconds = 5
 
     init() {
-        let store = ColimaStore()
+        // `--demo` runs on a built-in sample setup, which is how the README screenshots are made.
+        let store = CommandLine.arguments.contains("--demo")
+            ? ColimaStore(runner: DemoRunner(), prerequisites: { .ready })
+            : ColimaStore()
         _store = State(initialValue: store)
         if let path = Launch.argument("--dump-state") {
             Task { @MainActor in
                 await Launch.dumpState(of: store, to: path)
+                exit(0)
+            }
+        } else if let dir = Launch.argument("--screenshots") {
+            Task { @MainActor in
+                await Launch.screenshots(to: dir)
                 exit(0)
             }
         } else if let path = Launch.argument("--snapshot") {

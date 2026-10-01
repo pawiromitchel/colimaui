@@ -72,6 +72,21 @@ d=open('$PNG','rb').read(32)
 assert d[:8]==b'\x89PNG\r\n\x1a\n','not a PNG'
 w,h=struct.unpack('>II',d[16:24]); assert w>=800 and h>=500,(w,h)
 print(f'ok  snapshot {w}x{h}')"
+# Demo mode needs neither Colima nor Docker, so it exercises the app on its own sample setup.
+DEMO=build/e2e-demo.json
+rm -f "$DEMO"
+run_with_timeout 60 "$EXE" --demo --dump-state "$DEMO" || fail "demo mode did not exit cleanly in time"
+python3 - "$DEMO" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+assert len(d["containers"]) == 8, d["containers"]
+assert [g["title"] for g in d["groups"]] == ["monitoring", "shop", "Standalone"], d["groups"]
+assert d["attention"] == ["shop-worker-1 exited with code 1"], d["attention"]
+assert d["vmDisk"]["mount"] == "/mnt/lima-colima"
+assert not d["errors"], d["errors"]
+print("ok  demo mode: 8 containers in 3 groups, 1 attention item")
+PY
+
 # Launch the real GUI (window + menu bar item) and make sure it stays up.
 pkill -x ColimaUI 2>/dev/null || true
 sleep 1

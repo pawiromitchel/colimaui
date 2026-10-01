@@ -21,5 +21,5 @@ jobs:
           plutil -lint build/ColimaUI.app/Contents/Info.plist
           codesign --verify --strict build/ColimaUI.app
           test -s build/ColimaUI.app/Contents/Resources/AppIcon.icns
-      - name: Render cask template
-        run: ./scripts/render-cask.sh 0.0.0 "$(printf 'x' | shasum -a 256 | cut -d' ' -f1)" | ruby -c
+      - name: Release tooling (version bump and cask)
+        run: ./scripts/test-release.sh

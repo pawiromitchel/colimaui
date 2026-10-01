@@ -64,14 +64,7 @@ struct MainView: View {
             VStack(spacing: 0) {
                 StatusBanner(goToProfiles: { sectionName = NavSection.profiles.rawValue })
                 ZStack {
-                    switch section {
-                    case .dashboard: DashboardView(navigate: { sectionName = $0.rawValue })
-                    case .containers: ContainersView()
-                    case .images: ImagesView()
-                    case .volumes: VolumesView()
-                    case .networks: NetworksView()
-                    case .profiles: ProfilesView()
-                    }
+                    PageView(section: section, navigate: { sectionName = $0.rawValue })
                 }
                 .offset(slideOffset)
                 .opacity(slideOpacity)
@@ -200,5 +193,22 @@ struct SidebarRow: View {
     private var fill: Color {
         if selected { return Color.accentColor.opacity(hovering ? 0.26 : 0.2) }
         return hovering ? Color.primary.opacity(0.09) : .clear
+    }
+}
+
+/// The page for a sidebar section. Shared by the real window and the README screenshot renderer.
+struct PageView: View {
+    var section: NavSection
+    var navigate: (NavSection) -> Void
+
+    var body: some View {
+        switch section {
+        case .dashboard: DashboardView(navigate: navigate)
+        case .containers: ContainersView()
+        case .images: ImagesView()
+        case .volumes: VolumesView()
+        case .networks: NetworksView()
+        case .profiles: ProfilesView()
+        }
     }
 }
