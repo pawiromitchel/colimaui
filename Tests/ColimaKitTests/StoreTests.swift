@@ -76,13 +76,13 @@ import Foundation
         let shop = store.groups[0]
 
         await store.perform(.stop, on: shop)
-        #expect(runner.commandLines.contains("docker stop aaa111 bbb222"))
+        #expect(runner.commandLines.contains("docker stop bbb222 aaa111"))
 
         await store.perform(.start, on: shop)
         #expect(runner.commandLines.contains("docker start ccc333"))
 
         await store.perform(.restart, on: shop)
-        #expect(runner.commandLines.contains("docker restart aaa111 bbb222 ccc333"))
+        #expect(runner.commandLines.contains("docker restart bbb222 aaa111 ccc333"))
     }
 
     @Test func removeAndBusyStateClears() async {
@@ -136,6 +136,7 @@ import Foundation
     @Test func pruneLogsLastLine() async {
         let runner = makeRunner()
         runner.on("image", "prune", output: "Deleted Images:\nTotal reclaimed space: 1.2GB\n")
+        runner.responses.insert(runner.responses.removeLast(), at: 0)
         let store = ColimaStore(runner: runner)
         await store.refresh()
         await store.prune(.images)
