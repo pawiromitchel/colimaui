@@ -154,3 +154,26 @@ import Foundation
         #expect(store.activity.isEmpty)
     }
 }
+
+@MainActor
+@Suite struct LoadingStateTests {
+    @Test func hasLoadedFlipsAfterFirstRefresh() async {
+        let runner = FakeRunner()
+        runner.on("list", output: Sample.colimaList)
+        let store = ColimaStore(runner: runner)
+        #expect(!store.hasLoaded)
+        await store.refresh()
+        #expect(store.hasLoaded)
+    }
+
+    @Test func selectedProfileBusyWhileStarting() async {
+        let runner = FakeRunner()
+        runner.on("list", output: Sample.colimaList)
+        runner.streams = ["starting"]
+        let store = ColimaStore(runner: runner)
+        await store.refresh()
+        #expect(!store.selectedProfileIsBusy)
+        await store.startProfile("default")
+        #expect(!store.selectedProfileIsBusy)
+    }
+}

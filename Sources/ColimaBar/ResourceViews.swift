@@ -37,7 +37,9 @@ struct ImagesView: View {
                 }
             }
             Divider()
-            if store.images.isEmpty {
+            if !store.hasLoaded || (store.selectedProfileIsBusy && store.images.isEmpty) {
+                LoadingState(message: "Loading images…")
+            } else if store.images.isEmpty {
                 EmptyState(systemImage: "square.stack.3d.up", title: "No images", message: "Pull an image to get started.")
             } else {
                 List(store.images) { image in
@@ -96,7 +98,9 @@ struct VolumesView: View {
                 }
             }
             Divider()
-            if store.volumes.isEmpty {
+            if !store.hasLoaded || (store.selectedProfileIsBusy && store.volumes.isEmpty) {
+                LoadingState(message: "Loading volumes…")
+            } else if store.volumes.isEmpty {
                 EmptyState(systemImage: "externaldrive", title: "No volumes", message: "Volumes created by your containers appear here.")
             } else {
                 List(store.volumes) { volume in
@@ -133,7 +137,9 @@ struct NetworksView: View {
         VStack(spacing: 0) {
             PageHeader(title: "Networks", count: store.networks.count) { EmptyView() }
             Divider()
-            if store.networks.isEmpty {
+            if !store.hasLoaded || (store.selectedProfileIsBusy && store.networks.isEmpty) {
+                LoadingState(message: "Loading networks…")
+            } else if store.networks.isEmpty {
                 EmptyState(systemImage: "network", title: "No networks", message: "Docker creates networks for your stacks.")
             } else {
                 List(store.networks) { network in

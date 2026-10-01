@@ -54,6 +54,14 @@ public final class ColimaStore {
         Grouping.group(Grouping.filter(containers, query: searchText), by: groupMode)
     }
 
+    /// False until the first refresh finishes, so the UI can show a spinner instead of empty lists.
+    public var hasLoaded: Bool { lastRefresh != nil }
+
+    /// What the selected profile is busy with, if anything (start, stop or delete in progress).
+    public var selectedProfileIsBusy: Bool {
+        selectedProfile.map { busyProfiles.contains($0.name) } ?? false
+    }
+
     public var runningContainerCount: Int { containers.filter(\.isRunning).count }
 
     public func container(id: String) -> Container? { containers.first { $0.id == id } }
@@ -89,13 +97,14 @@ public final class ColimaStore {
         async let v = capture { try await client.volumes() }
         async let n = capture { try await client.networks() }
         async let s = capture { try await client.stats() }
-        let (cs, im, vo, ne, st) = await (c, i, v, n, s)
+        let (cs, im, vo, ne) = await (c, i, v, n)
         if let cs { containers = cs }
         if let im { images = im }
         if let vo { volumes = vo }
         if let ne { networks = ne }
-        if let st { stats = Dictionary(st.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a }) }
+        // Lists are ready: show them now. `docker stats` is slow, so its numbers fill in afterwards.
         lastRefresh = Date()
+        if let st = await s { stats = Dictionary(st.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a }) }
     }
 
     public func refreshProfiles() async {

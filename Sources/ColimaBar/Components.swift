@@ -83,6 +83,18 @@ struct EmptyState: View {
     }
 }
 
+struct LoadingState: View {
+    var message: String
+    var body: some View {
+        VStack(spacing: 12) {
+            ProgressView().controlSize(.large)
+            Text(message).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct Card<Content: View>: View {
     var dimmed = false
     @ViewBuilder var content: Content

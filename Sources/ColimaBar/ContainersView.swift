@@ -51,7 +51,11 @@ struct ContainersView: View {
     private var list: some View {
         let groups = store.groups
         return Group {
-            if store.containers.isEmpty {
+            if !store.hasLoaded {
+                LoadingState(message: "Loading containers…")
+            } else if store.selectedProfileIsBusy && store.containers.isEmpty {
+                LoadingState(message: "Waiting for Colima…")
+            } else if store.containers.isEmpty {
                 EmptyState(systemImage: "shippingbox", title: "No containers",
                            message: "Run a container or `docker compose up` and it will show up here.")
             } else if groups.allSatisfy({ $0.containers.isEmpty }) {

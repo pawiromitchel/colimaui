@@ -18,7 +18,10 @@ struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 2) {
             header
             Divider().padding(.vertical, 4)
-            if let p = store.selectedProfile, p.isRunning {
+            if !store.hasLoaded {
+                HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Loading…").foregroundStyle(.secondary) }
+                    .padding(8)
+            } else if let p = store.selectedProfile, p.isRunning {
                 let groups = store.groups
                 if groups.isEmpty {
                     Text("No containers").foregroundStyle(.secondary).padding(.vertical, 6).padding(.horizontal, 8)
