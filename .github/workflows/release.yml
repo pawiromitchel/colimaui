@@ -12,6 +12,7 @@ on:
       - "**.md"
       - "docs/**"
       - "Casks/**"
+      - ".github/**"
 
 concurrency:
   group: release
@@ -74,11 +75,6 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           sha=$(cut -d' ' -f1 "dist/ColimaUI-$VERSION.zip.sha256")
-          mkdir -p Casks
-          ./scripts/render-cask.sh "$VERSION" "$sha" > Casks/colimaui.rb
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Casks/colimaui.rb
-          git commit -m "Update Homebrew cask to $VERSION"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          ./scripts/update-cask.sh "$VERSION" "$sha"
