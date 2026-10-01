@@ -44,8 +44,12 @@ enum Launch {
     @MainActor
     static func snapshot(of store: ColimaStore, to path: String) {
         _ = NSApplication.shared
-        let size = NSSize(width: 1100, height: 700)
-        let host = NSHostingView(rootView: MainView().environment(store).frame(width: size.width, height: size.height))
+        // COLIMABAR_SNAPSHOT=menu renders the menu bar popover instead of the main window.
+        let menu = ProcessInfo.processInfo.environment["COLIMABAR_SNAPSHOT"] == "menu"
+        let size = menu ? NSSize(width: 340, height: 520) : NSSize(width: 1100, height: 700)
+        let host: NSHostingView<AnyView> = menu
+            ? NSHostingView(rootView: AnyView(MenuBarView().environment(store).frame(width: size.width, height: size.height, alignment: .top)))
+            : NSHostingView(rootView: AnyView(MainView().environment(store).frame(width: size.width, height: size.height)))
         host.frame = NSRect(origin: .zero, size: size)
         let window = NSWindow(contentRect: host.frame, styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.appearance = NSAppearance(named: .aqua)

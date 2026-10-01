@@ -64,10 +64,14 @@ struct MenuBarView: View {
             if let p = store.selectedProfile {
                 let busy = store.busyProfiles.contains(p.name)
                 if busy { ProgressView().controlSize(.small) }
-                Button(p.isRunning ? "Stop VM" : "Start VM") {
+                Button {
                     Task { p.isRunning ? await store.stopProfile(p.name) : await store.startProfile(p.name) }
+                } label: {
+                    Text(p.isRunning ? "Stop VM" : "Start VM")
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .hoverHighlight(.subtle)
                 }
-                .buttonStyle(.borderless).foregroundStyle(.secondary).disabled(busy)
+                .buttonStyle(.plain).foregroundStyle(.secondary).disabled(busy)
             }
         }
         .padding(.horizontal, 8).padding(.vertical, 4)
@@ -94,6 +98,7 @@ struct MenuBarView: View {
                 IconButton(systemName: "arrow.clockwise", help: "Restart all") { Task { await store.perform(.restart, on: group) } }
             }
             .padding(.horizontal, 8).padding(.vertical, 2)
+            .hoverHighlight(.subtle)
             if !collapsed.contains(group.id) {
                 ForEach(group.containers) { containerRow($0, indent: true).transition(.opacity.combined(with: .move(edge: .top))) }
             }
@@ -118,27 +123,29 @@ struct MenuBarView: View {
                 }
             }
         }
-        .padding(.leading, indent ? 30 : 8).padding(.trailing, 8).padding(.vertical, 1)
-        .foregroundStyle(c.isRunning ? .primary : .secondary)
+        .padding(.leading, indent ? 30 : 8).padding(.trailing, 8).padding(.vertical, 2)
+        .hoverHighlight(.subtle)
+        .opacity(c.isRunning ? 1 : 0.6)
     }
 
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Button("Open ColimaBar") { openMain() }.keyboardShortcut("o")
+        VStack(alignment: .leading, spacing: 0) {
+            Button { openMain() } label: { MenuItemLabel(title: "Open ColimaBar", hint: "⌘O") }
+                .buttonStyle(.plain).keyboardShortcut("o")
             if store.profiles.count > 1 {
-                Menu("Switch profile") {
+                Menu {
                     ForEach(store.profiles) { p in
                         Button(p.name + (p.isRunning ? "" : " (stopped)")) {
                             store.selectedProfileName = p.name
                             Task { await store.refresh() }
                         }
                     }
-                }
+                } label: { MenuItemLabel(title: "Switch profile", hint: "›") }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden)
             }
-            Button("Quit") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")
+            Button { NSApplication.shared.terminate(nil) } label: { MenuItemLabel(title: "Quit", hint: "⌘Q") }
+                .buttonStyle(.plain).keyboardShortcut("q")
         }
-        .buttonStyle(.borderless)
-        .padding(.horizontal, 8)
     }
 
     private func toggle(_ id: String) {

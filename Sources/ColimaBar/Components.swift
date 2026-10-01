@@ -39,13 +39,18 @@ struct IconButton: View {
     var role: ButtonRole?
     var disabled = false
     var action: () -> Void
+    @State private var hovering = false
 
     var body: some View {
         Button(role: role, action: action) {
             Image(systemName: systemName)
                 .frame(width: 22, height: 22)
+                .background(RoundedRectangle(cornerRadius: 5)
+                    .fill((role == .destructive ? Color.red : Color.primary).opacity(hovering && !disabled ? 0.14 : 0)))
                 .contentShape(Rectangle())
         }
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
         .buttonStyle(.borderless)
         .help(help)
         .disabled(disabled)
@@ -159,5 +164,52 @@ enum ANSI {
     static func strip(_ s: String) -> String {
         guard s.contains("\u{1B}"), let pattern else { return s }
         return pattern.stringByReplacingMatches(in: s, range: NSRange(s.startIndex..., in: s), withTemplate: "")
+    }
+}
+
+
+// MARK: - Hover highlights
+
+/// Lights a row up under the pointer. `.subtle` is a soft wash for list rows; `.menuItem` is the accent
+/// fill native menus use, with white text.
+struct HoverHighlight: ViewModifier {
+    enum Style { case subtle, menuItem }
+    var style: Style
+    var cornerRadius: CGFloat = 6
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            .foregroundStyle(style == .menuItem && hovering ? Color.white : Color.primary)
+            .background(RoundedRectangle(cornerRadius: cornerRadius).fill(fill))
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .onHover { hovering = $0 }
+            .animation(.easeOut(duration: 0.1), value: hovering)
+    }
+
+    private var fill: Color {
+        guard hovering else { return .clear }
+        return style == .menuItem ? Color.accentColor : Color.primary.opacity(0.09)
+    }
+}
+
+extension View {
+    func hoverHighlight(_ style: HoverHighlight.Style = .subtle, cornerRadius: CGFloat = 6) -> some View {
+        modifier(HoverHighlight(style: style, cornerRadius: cornerRadius))
+    }
+}
+
+/// A full-width, menu-style row: title on the left, optional hint (shortcut or chevron) on the right.
+struct MenuItemLabel: View {
+    var title: String
+    var hint: String?
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            if let hint { Text(hint).font(.caption).opacity(0.6) }
+        }
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .hoverHighlight(.menuItem)
     }
 }
