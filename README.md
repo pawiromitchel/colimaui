@@ -5,8 +5,8 @@
 <h1 align="center">ColimaUI</h1>
 
 <p align="center">
-  A native macOS app for <a href="https://github.com/abiosoft/colima">Colima</a>, laid out like Docker Desktop.<br>
-  See your stacks, containers, logs and disk use at a glance, without Docker Desktop.
+  A native macOS app for <a href="https://github.com/abiosoft/colima">Colima</a>.<br>
+  See your stacks, containers, logs and disk use at a glance.
 </p>
 
 <p align="center">
@@ -15,8 +15,6 @@
     <img src="docs/screenshots/dashboard.png" width="860" alt="The ColimaUI dashboard">
   </picture>
 </p>
-
-> The screenshots show a built-in demo setup, not real containers. To try the app on it, run `open -a ColimaUI --args --demo`.
 
 ## Install
 
@@ -65,7 +63,7 @@ The page the app opens on. CPU and memory with a short sparkline, how full the V
 
 **Needs attention** lists crashed or restarting containers and a nearly full disk, with a link to the logs or the fix. The same signal puts a small badge on the menu bar icon.
 
-### Containers, grouped like Docker Desktop
+### Containers, grouped by stack
 
 <p align="center">
   <img src="docs/screenshots/containers.png" width="860" alt="Containers grouped by Compose stack">
@@ -152,7 +150,7 @@ The live tests only create and remove containers named `colimaui-e2e-*`. They ne
 
 **"ColimaUI can't be opened because Apple cannot check it."** Installed by hand? See [Install without Homebrew](#install). The Homebrew cask clears this for you.
 
-**Homebrew also installed a `docker` formula, and I already have Docker Desktop.** The cask lists `docker` as a dependency so a fresh Mac gets everything. If your `docker` command comes from Docker Desktop, Homebrew leaves its copy unlinked and your existing one keeps working. `brew uninstall docker` removes it if you prefer.
+**Homebrew installed a `docker` formula even though I already have a `docker` command.** The cask lists `docker` as a dependency so a fresh Mac gets everything. If your existing `docker` comes from somewhere else, Homebrew leaves its own copy unlinked and yours keeps working. `brew uninstall docker` removes it if you prefer.
 
 **The dashboard says my VM disk couldn't be read.** ColimaUI reads it with `colima ssh -- df`, which needs a running VM.
 
