@@ -1,7 +1,7 @@
 import Foundation
 
-/// A pretend Colima and Docker with a small, believable set of stacks. It backs `ColimaUI --demo`, which
-/// is how the README screenshots are produced without exposing anyone's real containers, and it lets the
+/// A pretend Colima and Docker with a small, believable set of stacks. It's what the README screenshots
+/// are rendered from without exposing anyone's real containers, and it lets the
 /// whole UI be driven in tests: starting, stopping and deleting actually change what it reports.
 public final class DemoRunner: CommandRunning, @unchecked Sendable {
     struct DemoContainer {

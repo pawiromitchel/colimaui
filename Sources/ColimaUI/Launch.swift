@@ -83,7 +83,7 @@ enum Launch {
 
     // MARK: README screenshots
 
-    /// `--demo --screenshots <dir>`: writes the README images from the built-in sample setup.
+    /// `--screenshots <dir>`: writes the README images from a built-in sample setup, never from real containers.
     @MainActor
     static func screenshots(to dir: String) async {
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
