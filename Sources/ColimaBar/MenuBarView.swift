@@ -3,8 +3,21 @@ import ColimaKit
 
 struct MenuBarLabel: View {
     @Environment(ColimaStore.self) private var store
+
+    private static let images: [LlamaArt.GlyphState: NSImage] = [
+        .running: LlamaArt.menuBarImage(.running),
+        .stopped: LlamaArt.menuBarImage(.stopped),
+        .attention: LlamaArt.menuBarImage(.attention),
+    ]
+
+    private var state: LlamaArt.GlyphState {
+        guard let profile = store.selectedProfile, profile.isRunning else { return .stopped }
+        return store.attention.isEmpty ? .running : .attention
+    }
+
     var body: some View {
-        Image(systemName: store.selectedProfile?.isRunning == true ? "shippingbox.fill" : "shippingbox")
+        Image(nsImage: Self.images[state] ?? LlamaArt.menuBarImage(.running))
+            .accessibilityLabel("ColimaBar")
     }
 }
 

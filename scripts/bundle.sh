@@ -13,13 +13,12 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/ColimaBar"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
+# The icon is drawn in code (Sources/ColimaBar/LlamaArt.swift), so the app and the icon share one design.
 ICONSET=build/AppIcon.iconset
 rm -rf "$ICONSET"
-if swift scripts/make-icon.swift "$ICONSET" 2>/dev/null && iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns" 2>/dev/null; then
-  :
-else
-  echo "warning: icon generation failed, continuing without an icon" >&2
-fi
+swiftc -parse-as-library -O -o build/make-icon scripts/IconTool.swift Sources/ColimaBar/LlamaArt.swift
+build/make-icon "$ICONSET"
+iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 
 codesign --force --sign - "$APP" >/dev/null
 echo "Built $APP"

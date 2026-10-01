@@ -21,7 +21,11 @@ EXE="$APP/Contents/MacOS/ColimaBar"
 [ -x "$EXE" ] || fail "missing executable"
 plutil -lint "$APP/Contents/Info.plist" >/dev/null || fail "invalid Info.plist"
 codesign --verify --strict "$APP" || fail "signature check failed"
-echo "ok  bundle structure and signature"
+ICNS="$APP/Contents/Resources/AppIcon.icns"
+[ -s "$ICNS" ] || fail "missing app icon"
+ICON_W=$(sips -g pixelWidth "$ICNS" | awk '/pixelWidth/{print $2}')
+[ "$ICON_W" = "1024" ] || fail "app icon is $ICON_W px wide, expected 1024"
+echo "ok  bundle structure, signature and icon"
 
 STATE=build/e2e-state.json
 rm -f "$STATE"
