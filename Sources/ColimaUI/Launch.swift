@@ -142,16 +142,14 @@ enum Launch {
         let compose = ComposeDropModel(store: store)
         for _ in 0..<8 { await store.refresh() } // a few samples so the sparklines have a shape
 
-        func write(_ name: String, _ root: AnyView, size: NSSize, dark: Bool = false, settle: TimeInterval = 1.0) {
+        // The README and the portfolio use dark screenshots.
+        func write(_ name: String, _ root: AnyView, size: NSSize, dark: Bool = true, settle: TimeInterval = 1.0) {
             guard let png = render(root, size: size, dark: dark, settle: settle) else { return }
             try? png.write(to: URL(fileURLWithPath: "\(dir)/\(name).png"))
         }
         let window = NSSize(width: 1200, height: 760)
 
-        for dark in [false, true] {
-            let suffix = dark ? "-dark" : ""
-            write("dashboard\(suffix)", AnyView(ScreenshotWindow(section: .dashboard).environment(store).environment(compose)), size: window, dark: dark)
-        }
+        write("dashboard", AnyView(ScreenshotWindow(section: .dashboard).environment(store).environment(compose)), size: window)
         write("containers", AnyView(ScreenshotWindow(section: .containers).environment(store).environment(compose)), size: window)
 
         if let web = store.containers.first(where: { $0.name == "shop-api-1" }) {

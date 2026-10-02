@@ -10,10 +10,7 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
-    <img src="docs/screenshots/dashboard.png" width="860" alt="The ColimaUI dashboard">
-  </picture>
+  <img src="docs/screenshots/dashboard.png" width="860" alt="The ColimaUI dashboard">
 </p>
 
 ## Install
