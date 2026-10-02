@@ -8,9 +8,9 @@ struct ColimaUIApp: App {
     @AppStorage("refreshSeconds") private var refreshSeconds = 5
 
     init() {
+        Appearance.applyStored()
         let store = ColimaStore()
         _store = State(initialValue: store)
-        Appearance.applyStored()
         if let path = Launch.argument("--dump-state") {
             Task { @MainActor in
                 await Launch.dumpState(of: store, to: path)
