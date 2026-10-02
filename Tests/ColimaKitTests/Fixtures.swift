@@ -9,6 +9,10 @@ final class FakeRunner: CommandRunning, @unchecked Sendable {
     private var _calls: [Call] = []
     var responses: [(match: ([String]) -> Bool, result: CommandResult)] = []
     var streams: [String] = []
+    /// When set, streams end with this error after yielding their lines, like a command that exits non-zero.
+    var streamError: CommandError?
+    /// When true, streams yield their lines and then stay open until cancelled, like a long-running command.
+    var streamHangs = false
 
     var calls: [Call] { lock.lock(); defer { lock.unlock() }; return _calls }
     var commandLines: [String] { calls.map { ([$0.executable] + $0.arguments).joined(separator: " ") } }
@@ -20,6 +24,11 @@ final class FakeRunner: CommandRunning, @unchecked Sendable {
 
     private func record(_ call: Call) { lock.lock(); _calls.append(call); lock.unlock() }
 
+    /// Matches any command whose arguments include all of `words`. Takes priority over earlier rules.
+    func when(contains words: String..., output: String, exit: Int32 = 0, stderr: String = "") {
+        responses.insert(({ args in words.allSatisfy(args.contains) }, CommandResult(exitCode: exit, stdout: output, stderr: stderr)), at: 0)
+    }
+
     func run(_ executable: String, arguments: [String], environment: [String: String]) async throws -> CommandResult {
         record(Call(executable: executable, arguments: arguments, environment: environment))
         for r in responses where r.match(arguments) { return r.result }
@@ -28,8 +37,12 @@ final class FakeRunner: CommandRunning, @unchecked Sendable {
 
     func stream(_ executable: String, arguments: [String], environment: [String: String]) -> AsyncThrowingStream<String, Error> {
         record(Call(executable: executable, arguments: arguments, environment: environment))
-        let lines = streams
-        return AsyncThrowingStream { c in lines.forEach { c.yield($0) }; c.finish() }
+        let lines = streams, failure = streamError
+        let hangs = streamHangs
+        return AsyncThrowingStream { c in
+            lines.forEach { c.yield($0) }
+            if !hangs { c.finish(throwing: failure) }
+        }
     }
 }
 

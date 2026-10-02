@@ -119,24 +119,53 @@ public struct ProcessRunner: CommandRunning {
             process.standardOutput = pipe
             process.standardError = pipe
             let splitter = LineSplitter()
+            let tail = TailBuffer()
+            let cancelled = Flag()
+            let command = ([executable] + arguments).joined(separator: " ")
             pipe.fileHandleForReading.readabilityHandler = { handle in
                 let data = handle.availableData
                 if data.isEmpty { return }
-                for line in splitter.feed(data) { continuation.yield(line) }
+                for line in splitter.feed(data) { tail.add(line); continuation.yield(line) }
             }
-            process.terminationHandler = { _ in
+            process.terminationHandler = { proc in
                 pipe.fileHandleForReading.readabilityHandler = nil
                 let rest = pipe.fileHandleForReading.readDataToEndOfFile()
-                for line in splitter.feed(rest) { continuation.yield(line) }
-                if let tail = splitter.flush() { continuation.yield(tail) }
-                continuation.finish()
+                for line in splitter.feed(rest) { tail.add(line); continuation.yield(line) }
+                if let last = splitter.flush() { tail.add(last); continuation.yield(last) }
+                // A command that fails should fail the stream, unless we stopped it ourselves.
+                if proc.terminationStatus != 0 && !cancelled.isSet {
+                    continuation.finish(throwing: CommandError(command: command, exitCode: proc.terminationStatus, message: tail.text))
+                } else {
+                    continuation.finish()
+                }
             }
             continuation.onTermination = { _ in
+                cancelled.set()
                 if process.isRunning { process.terminate() }
             }
             do { try process.run() } catch { continuation.finish(throwing: error) }
         }
     }
+}
+
+private final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+    var isSet: Bool { lock.withLock { value } }
+    func set() { lock.withLock { value = true } }
+}
+
+/// The last few lines of output, used as the error message when a command fails.
+private final class TailBuffer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var lines: [String] = []
+    func add(_ line: String) {
+        lock.withLock {
+            if !line.trimmingCharacters(in: .whitespaces).isEmpty { lines.append(line) }
+            if lines.count > 6 { lines.removeFirst() }
+        }
+    }
+    var text: String { lock.withLock { lines.joined(separator: "\n") } }
 }
 
 private final class OutputCollector: @unchecked Sendable {

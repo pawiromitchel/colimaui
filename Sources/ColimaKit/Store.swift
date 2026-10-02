@@ -33,6 +33,14 @@ public final class ColimaStore {
     /// Set by the dashboard to open a container (`container:<id>`) or stack (`group:<id>`) on the Containers page.
     public var requestedSelection: String?
 
+    /// A short message the window shows briefly, like "Started shop".
+    public struct Notice: Identifiable, Equatable, Sendable {
+        public let id = UUID()
+        public var text: String
+        public var isError = false
+    }
+    public private(set) var notice: Notice?
+
     public var selectedProfileName: String = "default"
     public var groupMode: GroupMode = .stack
     public var searchText: String = ""
@@ -319,6 +327,13 @@ public final class ColimaStore {
         activity.append(ActivityEntry(level: level, message: trimmed))
         if activity.count > 300 { activity.removeFirst(activity.count - 300) }
     }
+
+    public func post(_ text: String, isError: Bool = false) {
+        notice = Notice(text: text, isError: isError)
+        log(isError ? .error : .info, text)
+    }
+
+    public func dismissNotice(_ id: UUID) { if notice?.id == id { notice = nil } }
 
     public func clearActivity() { activity.removeAll() }
 

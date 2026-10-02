@@ -5,11 +5,13 @@ import ColimaKit
 @main
 struct ColimaUIApp: App {
     @State private var store = ColimaStore()
+    @State private var composeModel: ComposeDropModel
     @AppStorage("refreshSeconds") private var refreshSeconds = 5
 
     init() {
         let store = ColimaStore()
         _store = State(initialValue: store)
+        _composeModel = State(initialValue: ComposeDropModel(store: store))
         if let path = Launch.argument("--dump-state") {
             Task { @MainActor in
                 await Launch.dumpState(of: store, to: path)
@@ -34,9 +36,10 @@ struct ColimaUIApp: App {
 
     var body: some Scene {
         Window("ColimaUI", id: "main") {
-            MainView().environment(store)
+            MainView().environment(store).environment(composeModel)
         }
         .defaultSize(width: 1100, height: 700)
+        .commands { ComposeCommands(model: composeModel) }
 
         MenuBarExtra {
             MenuBarView().environment(store)
@@ -47,6 +50,22 @@ struct ColimaUIApp: App {
 
         Settings {
             SettingsView().environment(store)
+        }
+    }
+}
+
+struct ComposeCommands: Commands {
+    var model: ComposeDropModel
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            Button("Start Stack from Compose File…") {
+                openWindow(id: "main")
+                NSApplication.shared.activate(ignoringOtherApps: true)
+                ComposePicker.choose { model.begin(urls: $0) }
+            }
+            .keyboardShortcut("o")
         }
     }
 }

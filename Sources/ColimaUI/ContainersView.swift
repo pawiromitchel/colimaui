@@ -8,6 +8,7 @@ enum ContainerSelection: Hashable {
 
 struct ContainersView: View {
     @Environment(ColimaStore.self) private var store
+    @Environment(ComposeDropModel.self) private var compose
     @State private var selection: ContainerSelection?
     @State private var collapsed: Set<String> = []
     @State private var pendingDelete: DeleteRequest?
@@ -29,6 +30,12 @@ struct ContainersView: View {
         .navigationTitle("Containers")
         .searchable(text: $store.searchText, prompt: "Search")
         .toolbar {
+            ToolbarItem {
+                if selection == nil {
+                    Button { ComposePicker.choose { compose.begin(urls: $0) } } label: { Label("Add stack", systemImage: "plus") }
+                        .help("Start a stack from a compose file (or drop one on the window)")
+                }
+            }
             ToolbarItem {
                 if selection == nil {
                 Picker("Group by", selection: $store.groupMode) {
@@ -75,7 +82,9 @@ struct ContainersView: View {
                 LoadingState(message: "Waiting for Colima…")
             } else if store.containers.isEmpty {
                 EmptyState(systemImage: "shippingbox", title: "No containers",
-                           message: "Run a container or `docker compose up` and it will show up here.")
+                           message: "Drop a compose file on this window to start a stack, or run a container and it will show up here.") {
+                    Button("Choose a compose file…") { ComposePicker.choose { compose.begin(urls: $0) } }
+                }
             } else if groups.allSatisfy({ $0.containers.isEmpty }) {
                 EmptyState(systemImage: "magnifyingglass", title: "No matches", message: "Try a different search.")
             } else {

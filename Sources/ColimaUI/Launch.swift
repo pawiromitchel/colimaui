@@ -74,11 +74,60 @@ enum Launch {
         case "sidebar":
             size = NSSize(width: 220, height: 420)
             root = AnyView(SidebarView(sectionName: .constant(NavSection.containers.rawValue)).environment(store))
+        case let t where t.hasPrefix("compose-") || t == "drop":
+            size = NSSize(width: 640, height: t == "drop" ? 360 : 640)
+            root = AnyView(composeSample(t, store: store))
         default:
             size = NSSize(width: 1100, height: 700)
-            root = AnyView(MainView().environment(store))
+            root = AnyView(MainView().environment(store).environment(ComposeDropModel(store: store)))
         }
         if let png = render(root, size: size, settle: 2.5) { try? png.write(to: URL(fileURLWithPath: path)) }
+    }
+
+    // MARK: Compose screens
+
+    private static let sampleConfig = """
+    {"name":"shop","services":{
+      "db":{"image":"postgres:16","volumes":[{"type":"volume","source":"pg","target":"/var/lib/postgresql/data"}]},
+      "api":{"build":{"context":"/Users/demo/storefront/api"},"ports":[{"target":8080,"published":"8080","protocol":"tcp"}]},
+      "web":{"build":{"context":"/Users/demo/storefront/web"},"ports":[{"target":80,"published":"3000","protocol":"tcp"}],
+             "volumes":[{"type":"bind","source":"/Users/demo/storefront/data","target":"/data"},{"type":"bind","source":"/Users/demo/storefront/web","target":"/app"}]}}}
+    """
+
+    /// The compose sheet in a fixed state, for checking the layout without running anything.
+    @MainActor
+    static func composeSample(_ kind: String, store: ColimaStore) -> some View {
+        let input = ComposeInput(files: ["/Users/demo/storefront/compose.yml"], workingDir: "/Users/demo/storefront", suggestedName: "storefront")
+        let plan = try? ComposePlan.parse(configJSON: sampleConfig, stderr: "", input: input, localImages: [])
+        var warned = plan
+        warned?.warnings.append("The \"STRIPE_KEY\" variable is not set. Defaulting to a blank string.")
+        warned?.envVariableCount = 3
+        let phase: ComposeDropModel.Phase
+        switch kind {
+        case "compose-running":
+            var progress = ComposeProgress(plan: plan!, project: "shop")
+            ["Image postgres:16 Pulling", "Image postgres:16 Pulled", "Image shop-web Building", "#9 [web 3/6] RUN npm ci",
+             "#9 added 412 packages in 11s", "#10 [web 4/6] COPY . ."].forEach { progress.apply(line: $0) }
+            phase = .running(progress, project: "shop", openLogs: true)
+        case "compose-invalid":
+            phase = .failure(.invalid("services.api.ports contains an invalid port: \"80800:80\""), files: input.files)
+        case "compose-missing": phase = .failure(.composeMissing, files: input.files)
+        case "compose-failed":
+            phase = .failure(.failed("Error response from daemon: pull access denied for shop-api, repository does not exist or may require 'docker login'"), files: input.files)
+        default: phase = .review(warned!)
+        }
+        let model = ComposeDropModel(store: store, previewPhase: phase, projectName: "storefront")
+        return ZStack {
+            if kind == "drop" {
+                ScreenshotWindow(section: .containers).environment(store).environment(model).overlay { DropOverlay() }
+            } else {
+                ComposeSheet().environment(model)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.35), lineWidth: 0.5))
+                    .padding(16)
+            }
+        }
     }
 
     // MARK: README screenshots
@@ -88,6 +137,7 @@ enum Launch {
     static func screenshots(to dir: String) async {
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         let store = ColimaStore(runner: DemoRunner(), prerequisites: { .ready })
+        let compose = ComposeDropModel(store: store)
         for _ in 0..<8 { await store.refresh() } // a few samples so the sparklines have a shape
 
         func write(_ name: String, _ root: AnyView, size: NSSize, dark: Bool = false, settle: TimeInterval = 1.0) {
@@ -98,9 +148,9 @@ enum Launch {
 
         for dark in [false, true] {
             let suffix = dark ? "-dark" : ""
-            write("dashboard\(suffix)", AnyView(ScreenshotWindow(section: .dashboard).environment(store)), size: window, dark: dark)
+            write("dashboard\(suffix)", AnyView(ScreenshotWindow(section: .dashboard).environment(store).environment(compose)), size: window, dark: dark)
         }
-        write("containers", AnyView(ScreenshotWindow(section: .containers).environment(store)), size: window)
+        write("containers", AnyView(ScreenshotWindow(section: .containers).environment(store).environment(compose)), size: window)
 
         if let web = store.containers.first(where: { $0.name == "shop-api-1" }) {
             var seed: [String] = []
@@ -109,17 +159,18 @@ enum Launch {
             }
             ScreenshotSeed.logLines = seed
             store.requestedSelection = "container:\(web.id)"
-            write("container-logs", AnyView(ScreenshotWindow(section: .containers).environment(store)), size: window, settle: 1.5)
+            write("container-logs", AnyView(ScreenshotWindow(section: .containers).environment(store).environment(compose)), size: window, settle: 1.5)
             store.requestedSelection = nil
             ScreenshotSeed.logLines = nil
         }
-        write("images", AnyView(ScreenshotWindow(section: .images).environment(store)), size: window)
-        write("profiles", AnyView(ScreenshotWindow(section: .profiles).environment(store)), size: window)
-        write("menu-bar", AnyView(ScreenshotPopover().environment(store)), size: NSSize(width: 372, height: 470))
+        write("images", AnyView(ScreenshotWindow(section: .images).environment(store).environment(compose)), size: window)
+        write("profiles", AnyView(ScreenshotWindow(section: .profiles).environment(store).environment(compose)), size: window)
+        write("compose-review", AnyView(composeSample("compose-review", store: store)), size: NSSize(width: 640, height: 640))
+        write("menu-bar", AnyView(ScreenshotPopover().environment(store).environment(compose)), size: NSSize(width: 372, height: 470))
 
         let empty = ColimaStore(runner: DemoRunner(), prerequisites: { Prerequisites(missing: ["colima", "docker"], brewAvailable: true) })
         await empty.refresh()
-        write("setup", AnyView(ScreenshotWindow(section: .dashboard, showsSetup: true).environment(empty)), size: window)
+        write("setup", AnyView(ScreenshotWindow(section: .dashboard, showsSetup: true).environment(empty).environment(ComposeDropModel(store: empty))), size: window)
     }
 }
 
