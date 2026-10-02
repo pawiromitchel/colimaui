@@ -1,6 +1,6 @@
 cask "colimaui" do
-  version "0.2.0"
-  sha256 "9e9589858b4767c386f313e71ce4ceb204acc1e66c26bd332f2fc131b1818b36"
+  version "0.3.0"
+  sha256 "5535c181fb9c60bb2b6ed34e7b39495fa1c80d84aa3e8f478f9c516e11c7d862"
 
   url "https://github.com/pawiromitchel/colimaui/releases/download/v#{version}/ColimaUI-#{version}.zip"
   name "ColimaUI"
