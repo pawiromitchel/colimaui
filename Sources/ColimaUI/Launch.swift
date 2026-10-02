@@ -137,42 +137,49 @@ enum Launch {
     /// `--screenshots <dir>`: writes the README images from a built-in sample setup, never from real containers.
     @MainActor
     static func screenshots(to dir: String) async {
-        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         let store = ColimaStore(runner: DemoRunner(), prerequisites: { .ready })
         let compose = ComposeDropModel(store: store)
         for _ in 0..<8 { await store.refresh() } // a few samples so the sparklines have a shape
-
-        func write(_ name: String, _ root: AnyView, size: NSSize, dark: Bool = false, settle: TimeInterval = 1.0) {
-            guard let png = render(root, size: size, dark: dark, settle: settle) else { return }
-            try? png.write(to: URL(fileURLWithPath: "\(dir)/\(name).png"))
-        }
-        let window = NSSize(width: 1200, height: 760)
-
-        for dark in [false, true] {
-            let suffix = dark ? "-dark" : ""
-            write("dashboard\(suffix)", AnyView(ScreenshotWindow(section: .dashboard).environment(store).environment(compose)), size: window, dark: dark)
-        }
-        write("containers", AnyView(ScreenshotWindow(section: .containers).environment(store).environment(compose)), size: window)
-
-        if let web = store.containers.first(where: { $0.name == "shop-api-1" }) {
-            var seed: [String] = []
-            if let client = store.docker {
-                do { for try await line in client.logs(id: web.id, tail: 50, follow: false) { seed.append(line) } } catch {}
-            }
-            ScreenshotSeed.logLines = seed
-            store.requestedSelection = "container:\(web.id)"
-            write("container-logs", AnyView(ScreenshotWindow(section: .containers).environment(store).environment(compose)), size: window, settle: 1.5)
-            store.requestedSelection = nil
-            ScreenshotSeed.logLines = nil
-        }
-        write("images", AnyView(ScreenshotWindow(section: .images).environment(store).environment(compose)), size: window)
-        write("profiles", AnyView(ScreenshotWindow(section: .profiles).environment(store).environment(compose)), size: window)
-        write("compose-review", AnyView(composeSample("compose-review", store: store)), size: NSSize(width: 640, height: 640))
-        write("menu-bar", AnyView(ScreenshotPopover().environment(store).environment(compose)), size: NSSize(width: 372, height: 470))
-
         let empty = ColimaStore(runner: DemoRunner(), prerequisites: { Prerequisites(missing: ["colima", "docker"], brewAvailable: true) })
         await empty.refresh()
-        write("setup", AnyView(ScreenshotWindow(section: .dashboard, showsSetup: true).environment(empty).environment(ComposeDropModel(store: empty))), size: window)
+        let window = NSSize(width: 1200, height: 760)
+        let fm = FileManager.default
+
+        // Two sets: light in `dir` (the landing page switches between them), and dark in `dir/dark`
+        // (what the README and the portfolio use). The landing page also expects `dashboard-dark.png` in `dir`.
+        for dark in [false, true] {
+            let out = dark ? "\(dir)/dark" : dir
+            try? fm.createDirectory(atPath: out, withIntermediateDirectories: true)
+
+            func write(_ name: String, _ root: AnyView, size: NSSize, settle: TimeInterval = 1.0) {
+                guard let png = render(root, size: size, dark: dark, settle: settle) else { return }
+                try? png.write(to: URL(fileURLWithPath: "\(out)/\(name).png"))
+            }
+
+            write("dashboard", AnyView(ScreenshotWindow(section: .dashboard).environment(store).environment(compose)), size: window)
+            if dark {
+                try? fm.removeItem(atPath: "\(dir)/dashboard-dark.png")
+                try? fm.copyItem(atPath: "\(out)/dashboard.png", toPath: "\(dir)/dashboard-dark.png")
+            }
+            write("containers", AnyView(ScreenshotWindow(section: .containers).environment(store).environment(compose)), size: window)
+
+            if let web = store.containers.first(where: { $0.name == "shop-api-1" }) {
+                var seed: [String] = []
+                if let client = store.docker {
+                    do { for try await line in client.logs(id: web.id, tail: 50, follow: false) { seed.append(line) } } catch {}
+                }
+                ScreenshotSeed.logLines = seed
+                store.requestedSelection = "container:\(web.id)"
+                write("container-logs", AnyView(ScreenshotWindow(section: .containers).environment(store).environment(compose)), size: window, settle: 1.5)
+                store.requestedSelection = nil
+                ScreenshotSeed.logLines = nil
+            }
+            write("images", AnyView(ScreenshotWindow(section: .images).environment(store).environment(compose)), size: window)
+            write("profiles", AnyView(ScreenshotWindow(section: .profiles).environment(store).environment(compose)), size: window)
+            write("compose-review", AnyView(composeSample("compose-review", store: store)), size: NSSize(width: 640, height: 640))
+            write("menu-bar", AnyView(ScreenshotPopover().environment(store).environment(compose)), size: NSSize(width: 372, height: 470))
+            write("setup", AnyView(ScreenshotWindow(section: .dashboard, showsSetup: true).environment(empty).environment(ComposeDropModel(store: empty))), size: window)
+        }
     }
 }
 
