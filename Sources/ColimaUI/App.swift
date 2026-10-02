@@ -10,6 +10,7 @@ struct ColimaUIApp: App {
     init() {
         let store = ColimaStore()
         _store = State(initialValue: store)
+        Appearance.applyStored()
         if let path = Launch.argument("--dump-state") {
             Task { @MainActor in
                 await Launch.dumpState(of: store, to: path)
@@ -80,6 +81,10 @@ struct SettingsView: View {
                 }
             if let loginError { Text(loginError).font(.caption).foregroundStyle(.secondary) }
 
+            Section("Appearance") {
+                AppearancePicker()
+            }
+
             Section("About") {
                 LabeledContent("Version", value: Self.version)
                 Link("ColimaUI on GitHub", destination: URL(string: "https://github.com/pawiromitchel/colimaui")!)
@@ -96,5 +101,18 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 420)
         .padding()
+    }
+}
+
+struct AppearancePicker: View {
+    @AppStorage(Appearance.key) private var stored = AppearanceMode.system.rawValue
+
+    var body: some View {
+        Picker("Theme", selection: $stored) {
+            ForEach(AppearanceMode.allCases) { Label($0.title, systemImage: $0.symbol).tag($0.rawValue) }
+        }
+        .pickerStyle(.segmented)
+        .onChange(of: stored) { Appearance.apply(AppearanceMode(stored: stored)) }
+        Text("System follows macOS, including its automatic switch at sunset.").font(.caption).foregroundStyle(.secondary)
     }
 }

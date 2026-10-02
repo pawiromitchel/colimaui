@@ -29,6 +29,7 @@ enum Launch {
             "vmDisk": store.vmDisk.map { ["mount": $0.mount, "total": $0.totalBytes, "used": $0.usedBytes] as [String: Any] } ?? NSNull(),
             "attention": store.attention.map(\.message),
             "historySamples": store.history.samples.count,
+            "effectiveAppearance": NSApplication.shared.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])?.rawValue ?? "unknown",
             "images": store.images.count,
             "volumes": store.volumes.count,
             "networks": store.networks.count,
@@ -78,7 +79,8 @@ enum Launch {
             size = NSSize(width: 1100, height: 700)
             root = AnyView(MainView().environment(store))
         }
-        if let png = render(root, size: size, settle: 2.5) { try? png.write(to: URL(fileURLWithPath: path)) }
+        let dark = ProcessInfo.processInfo.environment["COLIMAUI_DARK"] == "1"
+        if let png = render(root, size: size, dark: dark, settle: 2.5) { try? png.write(to: URL(fileURLWithPath: path)) }
     }
 
     // MARK: README screenshots
