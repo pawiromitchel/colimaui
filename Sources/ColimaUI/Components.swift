@@ -226,3 +226,52 @@ struct MenuItemLabel: View {
         .hoverHighlight(.menuItem)
     }
 }
+
+
+// MARK: - Appearance
+
+enum Appearance {
+    static let key = "appearance"
+
+    /// Applies the choice to every window and the menu bar popover. `system` hands control back to macOS.
+    @MainActor
+    static func apply(_ mode: AppearanceMode) {
+        NSApplication.shared.appearance = switch mode {
+        case .system: nil
+        case .light: NSAppearance(named: .aqua)
+        case .dark: NSAppearance(named: .darkAqua)
+        }
+    }
+
+    @MainActor
+    static func applyStored() {
+        apply(AppearanceMode(stored: UserDefaults.standard.string(forKey: key)))
+    }
+}
+
+/// The light, dark or system switcher.
+struct ThemeMenu: View {
+    @AppStorage(Appearance.key) private var stored = AppearanceMode.system.rawValue
+
+    private var mode: AppearanceMode { AppearanceMode(stored: stored) }
+
+    var body: some View {
+        Menu {
+            ForEach(AppearanceMode.allCases) { option in
+                Button {
+                    stored = option.rawValue
+                } label: {
+                    if option == mode { Label(option.title, systemImage: "checkmark") } else { Text(option.title) }
+                }
+            }
+        } label: {
+            Image(systemName: mode.symbol).frame(width: 22, height: 22)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Appearance: \(mode.title)")
+        .accessibilityLabel("Appearance, \(mode.title)")
+        .onChange(of: stored) { Appearance.apply(mode) }
+    }
+}

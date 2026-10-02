@@ -72,6 +72,20 @@ d=open('$PNG','rb').read(32)
 assert d[:8]==b'\x89PNG\r\n\x1a\n','not a PNG'
 w,h=struct.unpack('>II',d[16:24]); assert w>=800 and h>=500,(w,h)
 print(f'ok  snapshot {w}x{h}')"
+# Theme: a saved choice is applied at launch. `-appearance <value>` overrides the saved setting for one run.
+for mode in dark light; do
+  OUT="build/e2e-appearance-$mode.json"
+  rm -f "$OUT"
+  run_with_timeout 60 "$EXE" -appearance "$mode" --dump-state "$OUT" || fail "launch with appearance $mode failed"
+  python3 - "$OUT" "$mode" <<'PY'
+import json, sys
+state, mode = json.load(open(sys.argv[1])), sys.argv[2]
+want = {"dark": "NSAppearanceNameDarkAqua", "light": "NSAppearanceNameAqua"}[mode]
+assert state["effectiveAppearance"] == want, (mode, state["effectiveAppearance"])
+print(f"ok  appearance '{mode}' applied at launch")
+PY
+done
+
 # Launch the real GUI (window + menu bar item) and make sure it stays up.
 pkill -x ColimaUI 2>/dev/null || true
 sleep 1

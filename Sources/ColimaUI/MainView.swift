@@ -158,8 +158,15 @@ struct SidebarView: View {
     private func resources(_ p: ColimaProfile) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Divider()
-            Text("\(p.cpus) CPU · \(Format.bytes(p.memoryBytes)) RAM").font(.caption).foregroundStyle(.secondary)
-            Text("\(Format.bytes(p.diskBytes)) disk · \(store.runningContainerCount) running").font(.caption).foregroundStyle(.secondary)
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(p.cpus) CPU · \(Format.bytes(p.memoryBytes)) RAM").font(.caption).foregroundStyle(.secondary)
+                    Text("\(Format.bytes(p.diskBytes)) disk · \(store.runningContainerCount) running").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                ThemeMenu()
+            }
+            .padding(.top, 4)
         }
         .padding(.horizontal, 14).padding(.bottom, 10)
         .frame(maxWidth: .infinity, alignment: .leading)

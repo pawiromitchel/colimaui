@@ -112,6 +112,10 @@ Click a container to open it full-width: live logs with filter, follow and times
 
 Control the VM, whole stacks and single containers without opening the window. The llama in the menu bar is dimmed when the VM is stopped and gets a small dot when something needs attention.
 
+### Light, dark or system
+
+The button at the bottom of the sidebar (and **Settings**) switches between **System**, **Light** and **Dark**. System is the default and follows macOS, including its automatic switch at sunset.
+
 ## How it works
 
 ColimaUI is a thin window over the tools you already have. It runs the `colima` and `docker` command-line tools and points `DOCKER_HOST` at the profile's own socket (`~/.colima/<profile>/docker.sock`), so it never changes your active Docker context unless you press **Use context**. Container lists refresh every few seconds (2 to 30, in Settings), and logs stream live.
