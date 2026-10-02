@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" width="860" alt="The ColimaUI dashboard">
+  <img src="docs/screenshots/dark/dashboard.png" width="860" alt="The ColimaUI dashboard">
 </p>
 
 ## Install
@@ -47,7 +47,7 @@ You'll also need Colima and Docker's command-line tool: `brew install colima doc
 You don't have to work it out. ColimaUI checks for `colima` and `docker` when it opens and, if either is missing, shows what's needed with a one-click **Install in Terminal** button. It watches for the install to finish and moves on to the dashboard by itself. No Homebrew either? It tells you and links to [brew.sh](https://brew.sh).
 
 <p align="center">
-  <img src="docs/screenshots/setup.png" width="640" alt="The first-run screen offering to install Colima and Docker">
+  <img src="docs/screenshots/dark/setup.png" width="640" alt="The first-run screen offering to install Colima and Docker">
 </p>
 
 Once the tools are there but no VM exists yet, the dashboard offers **Start Colima**, which creates the default profile for you. The first start downloads a small Linux image and takes a minute or two.
@@ -63,7 +63,7 @@ The page the app opens on. CPU and memory with a short sparkline, how full the V
 ### Containers, grouped by stack
 
 <p align="center">
-  <img src="docs/screenshots/containers.png" width="860" alt="Containers grouped by Compose stack">
+  <img src="docs/screenshots/dark/containers.png" width="860" alt="Containers grouped by Compose stack">
 </p>
 
 - Containers are grouped by **Compose stack**, with the running count and combined CPU and memory on each stack row. Group by image or switch grouping off from the toolbar.
@@ -77,7 +77,7 @@ Drag a `compose.yml` or `docker-compose.yml` (or a folder that has one) onto the
 Nothing runs straight away. A review sheet shows the stack name, each service and whether it will be built or pulled, the ports that open in your browser, the folders it mounts from your Mac, and warnings such as unset variables or privileged containers. Then **Start** runs `docker compose up -d` from the file's folder (so relative paths and `.env` work), with live progress, and **Start and open logs** takes you to the stack when it's up. Drop several files, such as a base file and an override, and they're combined. Drop a stack that already exists and the button reads **Update**.
 
 <p align="center">
-  <img src="docs/screenshots/compose-review.png" width="560" alt="The review sheet shown before a dropped compose file runs">
+  <img src="docs/screenshots/dark/compose-review.png" width="560" alt="The review sheet shown before a dropped compose file runs">
 </p>
 
 If the file is broken, you see Docker's own error before anything starts. Compose has to be installed separately (`brew install docker-compose`); ColimaUI uses either that or the `docker compose` plugin.
@@ -85,7 +85,7 @@ If the file is broken, you see Docker's own error before anything starts. Compos
 ### Logs and details
 
 <p align="center">
-  <img src="docs/screenshots/container-logs.png" width="860" alt="Live container logs">
+  <img src="docs/screenshots/dark/container-logs.png" width="860" alt="Live container logs">
 </p>
 
 Click a container to open it full-width: live logs with filter, follow and timestamps, `docker inspect`, and an info tab. **Shell** opens a session in Terminal. Click a stack instead and you get its services merged into one color-coded log.
@@ -93,8 +93,8 @@ Click a container to open it full-width: live logs with filter, follow and times
 ### Images, volumes, networks and profiles
 
 <p align="center">
-  <img src="docs/screenshots/images.png" width="420" alt="Images list showing which containers use each image">
-  <img src="docs/screenshots/profiles.png" width="420" alt="Colima profile cards">
+  <img src="docs/screenshots/dark/images.png" width="420" alt="Images list showing which containers use each image">
+  <img src="docs/screenshots/dark/profiles.png" width="420" alt="Colima profile cards">
 </p>
 
 - **Images** show which containers use them, and you can pull, delete and prune.
@@ -104,7 +104,7 @@ Click a container to open it full-width: live logs with filter, follow and times
 ### Menu bar
 
 <p align="center">
-  <img src="docs/screenshots/menu-bar.png" width="300" alt="The menu bar popover">
+  <img src="docs/screenshots/dark/menu-bar.png" width="300" alt="The menu bar popover">
 </p>
 
 Control the VM, whole stacks and single containers without opening the window. The llama in the menu bar is dimmed when the VM is stopped and gets a small dot when something needs attention.
