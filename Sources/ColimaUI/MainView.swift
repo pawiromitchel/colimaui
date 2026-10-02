@@ -20,6 +20,8 @@ enum NavSection: String, CaseIterable, Identifiable {
 
 struct MainView: View {
     @Environment(ColimaStore.self) private var store
+    @Environment(ComposeDropModel.self) private var compose
+    @State private var dropTargeted = false
     /// The app always opens on the dashboard.
     @State private var sectionName = NavSection.dashboard.rawValue
 
@@ -46,6 +48,7 @@ struct MainView: View {
     }
 
     var body: some View {
+        @Bindable var compose = compose
         Group {
             if store.hasLoaded && !store.prerequisites.isReady {
                 SetupView()
@@ -54,6 +57,36 @@ struct MainView: View {
             }
         }
         .frame(minWidth: 860, minHeight: 520)
+        .dropDestination(for: URL.self) { urls, _ in
+            guard store.prerequisites.isReady else { return false }
+            compose.begin(urls: urls)
+            return true
+        } isTargeted: { dropTargeted = $0 }
+        .overlay { if dropTargeted { DropOverlay().transition(.opacity) } }
+        .animation(.easeOut(duration: 0.15), value: dropTargeted)
+        .sheet(isPresented: $compose.isPresented) { ComposeSheet().environment(compose) }
+        .overlay(alignment: .bottom) {
+            if let notice = store.notice {
+                Toast(notice: notice).padding(.bottom, 18).transition(.move(edge: .bottom).combined(with: .opacity))
+                    .task(id: notice.id) {
+                        try? await Task.sleep(for: .seconds(notice.isError ? 7 : 4))
+                        store.dismissNotice(notice.id)
+                    }
+            }
+        }
+        .animation(.smooth(duration: 0.25), value: store.notice?.id)
+        .onChange(of: compose.completion?.id) {
+            guard let done = compose.completion else { return }
+            // Only jump to the stack if the sheet was still open; after "Run in background" the toast is enough.
+            if compose.isPresented {
+                if done.openLogs {
+                    store.groupMode = .stack
+                    store.requestedSelection = "group:stack:\(done.project)"
+                    sectionName = NavSection.containers.rawValue
+                }
+                compose.close()
+            }
+        }
     }
 
     private var splitView: some View {

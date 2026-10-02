@@ -73,6 +73,18 @@ The page the app opens on. CPU and memory with a short sparkline, how full the V
 - Start, stop, restart or delete a single container or a whole stack. Ports are links that open in your browser.
 - Search by name, image, stack or port.
 
+### Drop a compose file to start a stack
+
+Drag a `compose.yml` or `docker-compose.yml` (or a folder that has one) onto the window, or use **File > Start Stack from Compose File…** (⌘O) or the **+** in the Containers toolbar.
+
+Nothing runs straight away. A review sheet shows the stack name, each service and whether it will be built or pulled, the ports that open in your browser, the folders it mounts from your Mac, and warnings such as unset variables or privileged containers. Then **Start** runs `docker compose up -d` from the file's folder (so relative paths and `.env` work), with live progress, and **Start and open logs** takes you to the stack when it's up. Drop several files, such as a base file and an override, and they're combined. Drop a stack that already exists and the button reads **Update**.
+
+<p align="center">
+  <img src="docs/screenshots/compose-review.png" width="560" alt="The review sheet shown before a dropped compose file runs">
+</p>
+
+If the file is broken, you see Docker's own error before anything starts. Compose has to be installed separately (`brew install docker-compose`); ColimaUI uses either that or the `docker compose` plugin.
+
 ### Logs and details
 
 <p align="center">

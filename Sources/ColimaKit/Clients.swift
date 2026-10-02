@@ -154,6 +154,57 @@ public struct DockerClient: Sendable {
         return runner.stream("docker", arguments: args, environment: environment)
     }
 
+    // MARK: Compose
+
+    /// How to run compose: the `docker compose` plugin, or the standalone `docker-compose` that
+    /// `brew install docker-compose` provides. Homebrew's `docker` formula ships neither.
+    public struct ComposeTool: Equatable, Sendable {
+        public var executable: String
+        public var prefix: [String]
+        public static let plugin = ComposeTool(executable: "docker", prefix: ["compose"])
+        public static let standalone = ComposeTool(executable: "docker-compose", prefix: [])
+    }
+
+    public func composeTool(find: (String) -> String? = { ToolLocator.find($0) }) async -> ComposeTool? {
+        if let v = try? await docker(["compose", "version", "--short"]), !v.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .plugin
+        }
+        guard find("docker-compose") != nil,
+              let v = try? await runner.runChecked("docker-compose", arguments: ["version", "--short"], environment: environment),
+              !v.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return .standalone
+    }
+
+    private func composeArgs(_ tool: ComposeTool, project: String, workingDir: String?, files: [String], command: [String]) -> [String] {
+        var args = tool.prefix + ["--project-name", project]
+        if let workingDir { args += ["--project-directory", workingDir] }
+        for f in files { args += ["--file", f] }
+        return args + command
+    }
+
+    /// Resolves and validates the files. Returns compose's JSON plus its stderr, which carries warnings.
+    public func composeConfig(tool: ComposeTool, project: String, workingDir: String, files: [String]) async throws -> (json: String, stderr: String) {
+        let args = composeArgs(tool, project: project, workingDir: workingDir, files: files, command: ["config", "--format", "json"])
+        let result = try await runner.run(tool.executable, arguments: args, environment: environment)
+        guard result.succeeded else {
+            let message = ComposePlan.composeError(from: result.stderr)
+            throw CommandError(command: "docker compose config", exitCode: result.exitCode, message: message.isEmpty ? result.stdout : message)
+        }
+        return (result.stdout, result.stderr)
+    }
+
+    /// `up -d` with plain, line-per-event progress. Throws if compose exits with an error.
+    public func composeUpStream(tool: ComposeTool, project: String, workingDir: String, files: [String]) -> AsyncThrowingStream<String, Error> {
+        let args = composeArgs(tool, project: project, workingDir: workingDir, files: files, command: ["--progress", "plain", "up", "-d"])
+        return runner.stream(tool.executable, arguments: args, environment: environment)
+    }
+
+    public func composeDown(tool: ComposeTool = .plugin, project: String, workingDir: String, files: [String]) async throws {
+        let args = composeArgs(tool, project: project, workingDir: workingDir, files: files,
+                               command: ["down", "--volumes", "--remove-orphans", "--rmi", "local"])
+        _ = try await runner.runChecked(tool.executable, arguments: args, environment: environment)
+    }
+
     public static func composeArguments(project: String, workingDir: String?, files: [String], command: [String]) -> [String] {
         var args = ["compose", "--project-name", project]
         if let workingDir { args += ["--project-directory", workingDir] }
@@ -161,8 +212,11 @@ public struct DockerClient: Sendable {
         return args + command
     }
 
+    /// Recreates a stack from its files, using whichever compose is installed.
     public func composeUp(project: String, workingDir: String?, files: [String]) async throws {
-        _ = try await docker(Self.composeArguments(project: project, workingDir: workingDir, files: files, command: ["up", "-d"]))
+        let tool = await composeTool() ?? .plugin
+        let args = composeArgs(tool, project: project, workingDir: workingDir, files: files, command: ["up", "-d"])
+        _ = try await runner.runChecked(tool.executable, arguments: args, environment: environment)
     }
 
     /// Shell command to open an interactive session in a container, for Terminal.app.
