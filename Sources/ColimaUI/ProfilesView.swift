@@ -108,7 +108,7 @@ struct ProfileEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(draft.isNew ? "New profile" : "Edit \(draft.name)").font(.title3.weight(.medium))
+            Text(draft.isNew ? "New profile" : "Edit \(draft.name)").font(.title3.weight(.medium)).displayTracking()
             Form {
                 if draft.isNew { TextField("Name", text: $draft.name, prompt: Text("dev")) }
                 Stepper("CPU: \(draft.cpus)", value: $draft.cpus, in: 1...32)

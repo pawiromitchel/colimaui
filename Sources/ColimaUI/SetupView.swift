@@ -13,7 +13,7 @@ struct SetupView: View {
             Image(nsImage: appIcon)
                 .resizable().frame(width: 96, height: 96)
             VStack(spacing: 6) {
-                Text(p.title).font(.title2.weight(.medium))
+                Text(p.title).font(.title2.weight(.medium)).displayTracking()
                 Text(p.explanation).foregroundStyle(.secondary).multilineTextAlignment(.center).frame(maxWidth: 440)
             }
 

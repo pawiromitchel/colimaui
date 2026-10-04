@@ -7,7 +7,7 @@ private struct PageHeader<Actions: View>: View {
     @ViewBuilder var actions: Actions
     var body: some View {
         HStack {
-            Text(title).font(.title3.weight(.medium))
+            Text(title).font(.title3.weight(.medium)).displayTracking()
             Text("\(count)").foregroundStyle(.secondary)
             Spacer()
             actions

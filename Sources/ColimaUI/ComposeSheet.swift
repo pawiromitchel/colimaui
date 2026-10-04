@@ -43,7 +43,7 @@ private struct ReviewView: View {
         let update = model.isUpdate(model.projectName)
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(update ? "Update a stack" : "Start a stack").font(.title3.weight(.medium))
+                Text(update ? "Update a stack" : "Start a stack").font(.title3.weight(.medium)).displayTracking()
                 Text(plan.input.files.map { ($0 as NSString).abbreviatingWithTildeInPath }.joined(separator: " + "))
                     .font(.system(size: 12, design: .monospaced)).foregroundStyle(.secondary).lineLimit(2).truncationMode(.middle)
             }
@@ -147,7 +147,7 @@ private struct RunningView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Starting \(project)…").font(.title3.weight(.medium))
+            Text("Starting \(project)…").font(.title3.weight(.medium)).displayTracking()
             VStack(alignment: .leading, spacing: 0) {
                 row(icon: "checkmark.circle.fill", color: .green, title: "Checked the compose file", state: .done)
                 ForEach(progress.stages) { stage in
@@ -247,7 +247,7 @@ private struct FailureView: View {
 
     private func header(_ title: String, _ message: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.title3.weight(.medium))
+            Text(title).font(.title3.weight(.medium)).displayTracking()
             Text(message).foregroundStyle(.secondary)
         }
     }
@@ -297,7 +297,7 @@ struct DropOverlay: View {
             .overlay {
                 VStack(spacing: 8) {
                     Image(systemName: "shippingbox").font(.system(size: 36)).foregroundStyle(Color.accentColor)
-                    Text("Drop to start a stack").font(.title3.weight(.medium)).foregroundStyle(Color.accentColor)
+                    Text("Drop to start a stack").font(.title3.weight(.medium)).displayTracking().foregroundStyle(Color.accentColor)
                     Text("compose.yml, docker-compose.yml, or a folder that has one").foregroundStyle(Color.accentColor.opacity(0.85))
                 }
                 .padding(.horizontal, 28).padding(.vertical, 22)
@@ -318,8 +318,7 @@ struct Toast: View {
             Text(notice.text)
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
-        .background(.regularMaterial, in: Capsule())
-        .overlay(Capsule().stroke(Color.secondary.opacity(0.25), lineWidth: 0.5))
+        .floatingSurface(Capsule())
         .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
     }
 }

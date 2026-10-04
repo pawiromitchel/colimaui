@@ -51,7 +51,7 @@ struct IconButton: View {
         }
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: hovering)
-        .buttonStyle(.borderless)
+        .buttonStyle(PressScale(scale: 0.9))
         .help(help)
         .disabled(disabled)
         .accessibilityLabel(help)

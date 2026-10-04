@@ -132,7 +132,7 @@ struct DashboardView: View {
     private func header(_ profile: ColimaProfile) -> some View {
         HStack(spacing: 10) {
             StatusDot(color: profile.status.color)
-            Text(profile.name).font(.title3.weight(.medium))
+            Text(profile.name).font(.title3.weight(.medium)).displayTracking()
             Text("\(profile.runtime) · \(profile.arch) · \(profile.cpus) CPU · \(Format.bytes(profile.memoryBytes)) RAM")
                 .font(.callout).foregroundStyle(.secondary)
             Spacer()
@@ -172,7 +172,7 @@ struct DashboardView: View {
         let latest = store.history.latest?.cpuPercent
         return Tile(title: "CPU") {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(latest.map { String(format: "%.1f%%", $0) } ?? "–").font(.title2.weight(.medium)).monospacedDigit()
+                Text(latest.map { String(format: "%.1f%%", $0) } ?? "–").font(.title2.weight(.medium)).displayTracking().monospacedDigit()
                 Text("of \(profile.cpus) cores").font(.caption).foregroundStyle(.secondary)
             }
             Sparkline(values: store.history.samples.map(\.cpuPercent), maxValue: nil, color: .blue)
@@ -183,7 +183,7 @@ struct DashboardView: View {
         let latest = store.history.latest?.memoryBytes
         return Tile(title: "Memory") {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(latest.map { Format.bytes($0) } ?? "–").font(.title2.weight(.medium)).monospacedDigit()
+                Text(latest.map { Format.bytes($0) } ?? "–").font(.title2.weight(.medium)).displayTracking().monospacedDigit()
                 Text("of \(Format.bytes(profile.memoryBytes))").font(.caption).foregroundStyle(.secondary)
             }
             Sparkline(values: store.history.samples.map { Double($0.memoryBytes) }, maxValue: nil, color: .purple)
@@ -194,14 +194,14 @@ struct DashboardView: View {
         Tile(title: "VM disk") {
             if let disk = store.vmDisk {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(Format.bytes(disk.usedBytes)).font(.title2.weight(.medium)).monospacedDigit()
+                    Text(Format.bytes(disk.usedBytes)).font(.title2.weight(.medium)).displayTracking().monospacedDigit()
                     Text("of \(Format.bytes(disk.totalBytes))").font(.caption).foregroundStyle(.secondary)
                 }
                 UsageBar(fraction: disk.usedFraction, color: disk.usedFraction >= Attention.diskWarningFraction ? .orange : .blue)
                     .padding(.top, 6)
                 Text("\(Format.bytes(disk.freeBytes)) free").font(.caption).foregroundStyle(.secondary)
             } else {
-                Text("–").font(.title2.weight(.medium))
+                Text("–").font(.title2.weight(.medium)).displayTracking()
                 Text("Couldn't read the VM disk.").font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -210,7 +210,7 @@ struct DashboardView: View {
     private var containersTile: some View {
         Tile(title: "Containers") {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(store.runningContainerCount)").font(.title2.weight(.medium)).monospacedDigit()
+                Text("\(store.runningContainerCount)").font(.title2.weight(.medium)).displayTracking().monospacedDigit()
                 Text("of \(store.containers.count) running").font(.caption).foregroundStyle(.secondary)
             }
             let standalone = store.containers.filter { $0.composeProject == nil }.count
