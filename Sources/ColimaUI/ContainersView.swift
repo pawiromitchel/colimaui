@@ -12,21 +12,22 @@ struct ContainersView: View {
     @State private var selection: ContainerSelection?
     @State private var collapsed: Set<String> = []
     @State private var pendingDelete: DeleteRequest?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         @Bindable var store = store
         ZStack {
             if let selection, let detail = detail(for: selection) {
                 detail
-                    .transition(.move(edge: .trailing))
+                    .transition(reduceMotion ? .opacity : .move(edge: .trailing))
                     .zIndex(1)
             } else {
                 list
-                    .transition(.move(edge: .leading).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
             }
         }
         .clipped()
-        .animation(.smooth(duration: 0.3), value: selection)
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : Motion.settle, value: selection)
         .navigationTitle("Containers")
         .searchable(text: $store.searchText, prompt: "Search")
         .toolbar {
@@ -115,7 +116,7 @@ struct ContainersView: View {
         GroupRow(group: group, compact: false, collapsed: collapsed.contains(group.id),
                  selected: selection == .group(group.id),
                  toggle: {
-                withAnimation(.smooth(duration: 0.25)) {
+                withAnimation(Motion.quick) {
                     if collapsed.contains(group.id) { collapsed.remove(group.id) } else { collapsed.insert(group.id) }
                 }
             },

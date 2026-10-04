@@ -40,7 +40,7 @@ struct MainView: View {
         slideOpacity = 0
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(16))
-            withAnimation(.smooth(duration: 0.28)) {
+            withAnimation(Motion.settle) {
                 slideOffset = .zero
                 slideOpacity = 1
             }
@@ -67,14 +67,15 @@ struct MainView: View {
         .sheet(isPresented: $compose.isPresented) { ComposeSheet().environment(compose) }
         .overlay(alignment: .bottom) {
             if let notice = store.notice {
-                Toast(notice: notice).padding(.bottom, 18).transition(.move(edge: .bottom).combined(with: .opacity))
+                Toast(notice: notice).padding(.bottom, 18)
+                    .transition(.materialize(anchor: .bottom, reduceMotion: reduceMotion))
                     .task(id: notice.id) {
                         try? await Task.sleep(for: .seconds(notice.isError ? 7 : 4))
                         store.dismissNotice(notice.id)
                     }
             }
         }
-        .animation(.smooth(duration: 0.25), value: store.notice?.id)
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : Motion.arrive, value: store.notice?.id)
         .onChange(of: compose.completion?.id) {
             guard let done = compose.completion else { return }
             // Only jump to the stack if the sheet was still open; after "Run in background" the toast is enough.
@@ -223,7 +224,7 @@ struct SidebarRow: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(fill))
                 .contentShape(RoundedRectangle(cornerRadius: 8))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScale(scale: 0.98))
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: hovering)
         .animation(.easeOut(duration: 0.15), value: selected)
